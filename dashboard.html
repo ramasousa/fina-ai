@@ -45,10 +45,16 @@
 .cc-mc-right{width:24px;height:24px;border-radius:50%;background:#F79E1B;opacity:.95;margin-left:-10px;}
 .cc-visa{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:1px;}
 /* ── CATEGORY CHART LAYOUT ── */
-.cat-chart-wrap{display:flex;align-items:center;gap:16px;margin-bottom:10px;}
-.cat-donut-wrap{flex-shrink:0;}
-.cat-bars-wrap{flex:1;min-width:0;}
-@media(max-width:420px){.cat-chart-wrap{flex-direction:column;}.cat-donut-wrap{width:100%;}.cat-bars-wrap{width:100%;}}
+.cat-donut-center{display:flex;justify-content:center;margin-bottom:14px;}
+.cat-legend{display:flex;flex-direction:column;}
+.cat-leg-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b2);font-size:13px;}
+.cat-leg-row:last-child{border-bottom:none;padding-bottom:0;}
+.cat-leg-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.cat-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.cat-leg-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cat-leg-right{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:8px;}
+.cat-leg-pct{font-weight:700;font-family:'DM Mono',monospace;font-size:12px;}
+.cat-leg-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{height:-webkit-fill-available;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;min-height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
@@ -584,12 +590,13 @@ function renderCategoryBars(body, categories, skipTotal){
   var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||c.val||0); }, 0);
   var top6  = sorted.slice(0,6);
 
-  // Donut + bars layout
-  var wrap = document.createElement('div'); wrap.className='cat-chart-wrap';
-  var donutWrap = document.createElement('div'); donutWrap.className='cat-donut-wrap';
+  // Donut centralizado
+  var donutWrap = document.createElement('div'); donutWrap.className='cat-donut-center';
   renderDonutChart(donutWrap, top6, total);
-  var barsWrap = document.createElement('div'); barsWrap.className='cat-bars-wrap';
+  body.appendChild(donutWrap);
 
+  // Legenda abaixo
+  var legend = document.createElement('div'); legend.className='cat-legend';
   top6.forEach(function(c, i){
     var name  = c.categoria||c.nome||c.cat||'Outros';
     var val   = c.total||c.valor||c.val||0;
@@ -597,23 +604,19 @@ function renderCategoryBars(body, categories, skipTotal){
     var color = c.color || CAT_COLORS[i % CAT_COLORS.length];
     var icon  = CAT_ICONS[name] || '📦';
 
-    var row = document.createElement('div'); row.className='cat-row';
+    var row = document.createElement('div'); row.className='cat-leg-row';
     row.innerHTML =
-      '<span class="cat-icon">'+icon+'</span>'
-      +'<div class="cat-info">'
-        +'<div class="cat-top">'
-          +'<span class="cat-name">'+name+'</span>'
-          +'<span class="cat-amount" style="color:'+color+'">'+pct+'%</span>'
-        +'</div>'
-        +'<div class="cat-bar-track">'
-          +'<div class="cat-bar-fill" style="width:'+pct+'%;background:'+color+';"></div>'
-        +'</div>'
+      '<div class="cat-leg-left">'
+        +'<span class="cat-leg-dot" style="background:'+color+'"></span>'
+        +'<span class="cat-leg-name">'+icon+' '+name+'</span>'
+      +'</div>'
+      +'<div class="cat-leg-right">'
+        +'<span class="cat-leg-pct" style="color:'+color+'">'+pct+'%</span>'
+        +'<span class="cat-leg-val">'+fmt(val)+'</span>'
       +'</div>';
-    barsWrap.appendChild(row);
+    legend.appendChild(row);
   });
-
-  wrap.appendChild(donutWrap); wrap.appendChild(barsWrap);
-  body.appendChild(wrap);
+  body.appendChild(legend);
 
   if(!skipTotal&&total>0){
     var tot = document.createElement('div'); tot.className='tool-total';
