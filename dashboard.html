@@ -13,9 +13,40 @@
   --money:#10b981;--money-l:#34d399;--money-g:rgba(16,185,129,.1);
   --neg:#ef4444;
   --text:#f1f5f9;--muted:#64748b;--muted2:#1e2a3a;
-  --nav-h:58px;
-  --side-w:220px;
+  --nav-h:58px;--side-w:220px;
 }
+/* ── BRAND OVERRIDES ── */
+:root[data-brand="pulso"]{
+  --fina:#CC092F;--fina-d:#a80725;--fina-l:#ff8a9a;--fina-g:rgba(204,9,47,.12);
+}
+/* ── BRAND SWITCHER ── */
+.brand-switcher{display:flex;gap:4px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:3px;}
+.brand-opt{border:none;background:none;color:var(--muted);font-size:11.5px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.brand-opt.active{background:var(--fina);color:#fff;}
+/* ── CREDIT CARD VISUAL ── */
+.cc-visual{border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;margin-bottom:14px;min-height:148px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,var(--fina-d) 0%,var(--fina) 55%,rgba(167,139,250,.5) 100%);}
+:root[data-brand="pulso"] .cc-visual{background:linear-gradient(135deg,#8B0019 0%,var(--fina-d) 45%,var(--fina) 100%);}
+.cc-visual::before{content:'';position:absolute;top:-50px;right:-50px;width:190px;height:190px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none;}
+.cc-visual::after{content:'';position:absolute;bottom:-70px;right:30px;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none;}
+.cc-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+.cc-bank{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.5px;}
+.cc-chip{width:30px;height:22px;background:linear-gradient(135deg,#e8c84a,#b8860b);border-radius:4px;}
+.cc-number{font-family:'DM Mono',monospace;font-size:14px;color:rgba(255,255,255,.8);letter-spacing:3px;position:relative;z-index:1;margin:10px 0;}
+.cc-bottom{display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1;}
+.cc-holder-block{display:flex;flex-direction:column;gap:2px;}
+.cc-label-sm{font-size:8px;color:rgba(255,255,255,.55);letter-spacing:.5px;text-transform:uppercase;}
+.cc-holder{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.3px;text-transform:uppercase;}
+.cc-expiry-val{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);}
+.cc-network{display:flex;align-items:center;}
+.cc-mc-wrap{display:flex;}
+.cc-mc-left{width:24px;height:24px;border-radius:50%;background:#EB001B;opacity:.95;}
+.cc-mc-right{width:24px;height:24px;border-radius:50%;background:#F79E1B;opacity:.95;margin-left:-10px;}
+.cc-visa{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:1px;}
+/* ── CATEGORY CHART LAYOUT ── */
+.cat-chart-wrap{display:flex;align-items:center;gap:16px;margin-bottom:10px;}
+.cat-donut-wrap{flex-shrink:0;}
+.cat-bars-wrap{flex:1;min-width:0;}
+@media(max-width:420px){.cat-chart-wrap{flex-direction:column;}.cat-donut-wrap{width:100%;}.cat-bars-wrap{width:100%;}}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{height:-webkit-fill-available;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;min-height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
@@ -138,10 +169,14 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 <!-- TOP NAV -->
 <nav class="topnav">
   <div class="topnav-brand">
-    <div class="topnav-logo">✦</div>
-    <div class="topnav-name">fina<em>.ai</em></div>
+    <div class="topnav-logo" id="navLogo">✦</div>
+    <div class="topnav-name" id="navName">fina<em>.ai</em></div>
   </div>
   <div class="topnav-right">
+    <div class="brand-switcher">
+      <button class="brand-opt active" data-brand="fina" onclick="switchBrand('fina',this)">✦ Fina.ai</button>
+      <button class="brand-opt" data-brand="pulso" onclick="switchBrand('pulso',this)">◉ Pulso MCP</button>
+    </div>
     <div class="user-chip">
       <div class="user-avatar" id="uavatar">F</div>
       <span class="user-name" id="uname">Usuário</span>
@@ -209,6 +244,27 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 </div>
 
 <script>
+// ── BRAND / WHITE-LABEL ──
+var BRANDS = {
+  fina:  { id:'fina',  logo:'✦', nameHTML:'fina<em>.ai</em>', tagline:'Assistente financeira com IA', ccBank:'Bradesco', ccNetwork:'visa' },
+  pulso: { id:'pulso', logo:'◉', nameHTML:'Pulso<em> MCP</em>', tagline:'Open Finance · Bradesco',    ccBank:'Bradesco', ccNetwork:'mc'   },
+};
+function applyBrand(id){
+  var b = BRANDS[id] || BRANDS.fina;
+  document.documentElement.setAttribute('data-brand', b.id);
+  document.getElementById('navLogo').textContent = b.logo;
+  document.getElementById('navName').innerHTML   = b.nameHTML;
+  localStorage.setItem('fina_brand', b.id);
+  document.querySelectorAll('.brand-opt').forEach(function(el){
+    el.classList.toggle('active', el.dataset.brand === b.id);
+  });
+}
+function switchBrand(id, btn){ applyBrand(id); }
+(function(){
+  var saved = localStorage.getItem('fina_brand') || new URLSearchParams(location.search).get('brand') || 'fina';
+  applyBrand(saved);
+})();
+
 // ── AUTH GUARD ──
 var session = null;
 try { session = JSON.parse(sessionStorage.getItem('fina_session')); } catch(e){}
@@ -380,6 +436,7 @@ function renderBills(body, bills){
 
 function renderCards(body, cards){
   (cards||[]).forEach(function(c){
+    renderCreditCard(body,{ holder:'RAUL SOUSA', expiry:'12/28' });
     addRow(body, c.name||c.productType||'Cartão', c.creditCardAccountId||'', '');
   });
 }
@@ -423,6 +480,82 @@ function renderAnalytics(body, d){
   }
 }
 
+// ── DONUT CHART ──
+function renderDonutChart(container, items, total){
+  var NS='http://www.w3.org/2000/svg', W=140, R=48, SW=20, CX=W/2, CY=W/2;
+  var circ=2*Math.PI*R;
+  var svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 '+W+' '+W);
+  svg.style.cssText='width:140px;height:140px;display:block;';
+  // bg ring
+  var bg=document.createElementNS(NS,'circle');
+  bg.setAttribute('cx',CX);bg.setAttribute('cy',CY);bg.setAttribute('r',R);
+  bg.setAttribute('fill','none');bg.setAttribute('stroke','rgba(255,255,255,.06)');bg.setAttribute('stroke-width',SW);
+  svg.appendChild(bg);
+  var offset=0;
+  items.forEach(function(item,i){
+    var val=item.total||item.valor||item.val||0;
+    var pct=total>0?val/total:0;
+    var dash=pct*circ;
+    if(dash<1)return;
+    var c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',CX);c.setAttribute('cy',CY);c.setAttribute('r',R);
+    c.setAttribute('fill','none');
+    c.setAttribute('stroke',item.color||CAT_COLORS[i%CAT_COLORS.length]);
+    c.setAttribute('stroke-width',SW);
+    c.setAttribute('stroke-dasharray',(dash-1.5)+' '+(circ-dash+1.5));
+    c.setAttribute('stroke-dashoffset',circ-offset);
+    c.setAttribute('transform','rotate(-90 '+CX+' '+CY+')');
+    svg.appendChild(c);
+    offset+=dash;
+  });
+  // center label
+  function mkT(y,size,fill,weight,text){
+    var t=document.createElementNS(NS,'text');
+    t.setAttribute('x',CX);t.setAttribute('y',y);t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill',fill);t.setAttribute('font-size',size);
+    t.setAttribute('font-weight',weight);t.setAttribute('font-family','DM Sans,system-ui,sans-serif');
+    t.textContent=text; return t;
+  }
+  svg.appendChild(mkT(CY-4,9,'rgba(255,255,255,.5)','400','total'));
+  svg.appendChild(mkT(CY+9,10,'#34d399','700',fmt(total).replace('R$ ','R$')));
+  container.appendChild(svg);
+}
+
+// ── CREDIT CARD VISUAL ──
+function renderCreditCard(container, info){
+  var brand = BRANDS[document.documentElement.getAttribute('data-brand')] || BRANDS.fina;
+  var card=document.createElement('div'); card.className='cc-visual';
+  var top=document.createElement('div'); top.className='cc-top';
+  var bankEl=document.createElement('div'); bankEl.className='cc-bank'; bankEl.textContent=brand.ccBank;
+  var chipEl=document.createElement('div'); chipEl.className='cc-chip';
+  top.appendChild(bankEl); top.appendChild(chipEl); card.appendChild(top);
+  var num=document.createElement('div'); num.className='cc-number';
+  num.textContent='•••• •••• •••• '+( info.lastFour||'••••');
+  card.appendChild(num);
+  var bot=document.createElement('div'); bot.className='cc-bottom';
+  var holderBlock=document.createElement('div'); holderBlock.className='cc-holder-block';
+  var lbl=document.createElement('div'); lbl.className='cc-label-sm'; lbl.textContent='Titular';
+  var holder=document.createElement('div'); holder.className='cc-holder'; holder.textContent=info.holder||'RAUL SOUSA';
+  holderBlock.appendChild(lbl); holderBlock.appendChild(holder);
+  var expBlock=document.createElement('div'); expBlock.className='cc-holder-block';
+  var elbl=document.createElement('div'); elbl.className='cc-label-sm'; elbl.textContent='Validade';
+  var exp=document.createElement('div'); exp.className='cc-expiry-val'; exp.textContent=info.expiry||'12/28';
+  expBlock.appendChild(elbl); expBlock.appendChild(exp);
+  var net=document.createElement('div'); net.className='cc-network';
+  if(brand.ccNetwork==='mc'){
+    var wrap=document.createElement('div'); wrap.className='cc-mc-wrap';
+    var cl=document.createElement('div'); cl.className='cc-mc-left';
+    var cr=document.createElement('div'); cr.className='cc-mc-right';
+    wrap.appendChild(cl); wrap.appendChild(cr); net.appendChild(wrap);
+  } else {
+    var vis=document.createElement('div'); vis.className='cc-visa'; vis.textContent='VISA'; net.appendChild(vis);
+  }
+  bot.appendChild(holderBlock); bot.appendChild(expBlock); bot.appendChild(net);
+  card.appendChild(bot);
+  container.appendChild(card);
+}
+
 var CAT_COLORS = ['#7c3aed','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 var CAT_ICONS = {
   'Alimentação':'🍔','Restaurantes':'🍽️','Delivery':'🛵','Mercado':'🛒','Supermercado':'🛒',
@@ -430,38 +563,46 @@ var CAT_ICONS = {
   'Lazer':'🎮','Moradia':'🏠','Educação':'📚','Outros':'📦','Assinaturas':'📡',
 };
 
-function renderCategoryBars(body, categories){
+function renderCategoryBars(body, categories, skipTotal){
   var sorted = (categories||[]).slice().sort(function(a,b){
     return (b.total||b.valor||b.val||0)-(a.total||a.valor||a.val||0);
-  }).slice(0,6);
+  });
   var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||c.val||0); }, 0);
+  var top6  = sorted.slice(0,6);
 
-  sorted.forEach(function(c, i){
-    var name = c.categoria||c.nome||c.cat||'Outros';
-    var val  = c.total||c.valor||c.val||0;
-    var pct  = total>0 ? Math.round(val/total*100) : 0;
-    var color = CAT_COLORS[i % CAT_COLORS.length];
+  // Donut + bars layout
+  var wrap = document.createElement('div'); wrap.className='cat-chart-wrap';
+  var donutWrap = document.createElement('div'); donutWrap.className='cat-donut-wrap';
+  renderDonutChart(donutWrap, top6, total);
+  var barsWrap = document.createElement('div'); barsWrap.className='cat-bars-wrap';
+
+  top6.forEach(function(c, i){
+    var name  = c.categoria||c.nome||c.cat||'Outros';
+    var val   = c.total||c.valor||c.val||0;
+    var pct   = total>0 ? Math.round(val/total*100) : 0;
+    var color = c.color || CAT_COLORS[i % CAT_COLORS.length];
     var icon  = CAT_ICONS[name] || '📦';
 
-    var row = document.createElement('div');
-    row.className = 'cat-row';
+    var row = document.createElement('div'); row.className='cat-row';
     row.innerHTML =
       '<span class="cat-icon">'+icon+'</span>'
       +'<div class="cat-info">'
         +'<div class="cat-top">'
           +'<span class="cat-name">'+name+'</span>'
-          +'<span class="cat-amount" style="color:'+color+'">'+fmt(val)+'</span>'
+          +'<span class="cat-amount" style="color:'+color+'">'+pct+'%</span>'
         +'</div>'
         +'<div class="cat-bar-track">'
           +'<div class="cat-bar-fill" style="width:'+pct+'%;background:'+color+';"></div>'
         +'</div>'
       +'</div>';
-    body.appendChild(row);
+    barsWrap.appendChild(row);
   });
 
-  if(total>0){
+  wrap.appendChild(donutWrap); wrap.appendChild(barsWrap);
+  body.appendChild(wrap);
+
+  if(!skipTotal&&total>0){
     var tot = document.createElement('div'); tot.className='tool-total';
-    tot.style.marginTop='10px';
     tot.innerHTML='<span>Total</span><span class="val">'+fmt(total)+'</span>';
     body.appendChild(tot);
   }
@@ -529,14 +670,15 @@ function renderCardBody(body, tool, d){
   if(tool==='consultar_gastos'&&d&&d.gastos){ renderCategoryBars(body,d.gastos); return; }
   if(tool==='consultar_fatura'&&d){
     var fa=d.fatura_atual||d;
+    renderCreditCard(body,{ holder:'RAUL SOUSA', expiry:'12/28' });
     if(fa.total!=null) addRow(body,'Total da fatura',fmt(fa.total),'red');
     if(fa.vencimento) addRow(body,'Vencimento',fa.vencimento,'');
     if(fa.limite_disponivel!=null) addRow(body,'Limite disponível',fmt(fa.limite_disponivel),'green');
     if(fa.por_categoria&&fa.por_categoria.length){
       var sep=document.createElement('div');
-      sep.className='account-group-label';sep.style.marginTop='8px';
+      sep.className='account-group-label';sep.style.marginTop='10px';
       sep.textContent='Gastos por categoria';body.appendChild(sep);
-      renderCategoryBars(body,fa.por_categoria);
+      renderCategoryBars(body,fa.por_categoria,true);
     }
     return;
   }

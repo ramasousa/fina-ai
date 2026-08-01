@@ -252,8 +252,47 @@ function gastosDoMes(periodo) {
   return { gastos, total: Number(total.toFixed(2)), maior: gastos[0]?.cat };
 }
 
+// ── Conta PJ (Sousa Tech) ──
+const CONTA_PJ = {
+  disponivel: 284750.00,
+  titular: 'Sousa Tech Ltda',
+  cnpj: '12.345.678/0001-99',
+};
+
 // ── "Executores" das tools ──────────────────────────────────────
 export const executores = {
+  // Compatível com o formato MCP — retorna PF + PJ
+  select_account() {
+    return {
+      data: {
+        accounts: [
+          { accountId:'pf-cc-0001',  titular:'Raul Sousa',       personType:'PESSOA_FISICA',   tipo:'CONTA_DEPOSITO_A_VISTA', rotulo:'Conta Corrente PF', saldo_disponivel:{ amount:String(CONTA.disponivel),  currency:'BRL' } },
+          { accountId:'pf-poup-0001',titular:'Raul Sousa',       personType:'PESSOA_FISICA',   tipo:'CONTA_POUPANCA',         rotulo:'Poupança PF',       saldo_disponivel:{ amount:String(CONTA.poupanca),    currency:'BRL' } },
+          { accountId:'pj-cc-0001',  titular:'Sousa Tech Ltda',  personType:'PESSOA_JURIDICA', tipo:'CONTA_DEPOSITO_A_VISTA', rotulo:'Conta Corrente PJ', saldo_disponivel:{ amount:String(CONTA_PJ.disponivel),currency:'BRL' } },
+        ],
+      },
+      meta: 'extensão · seleção de conta PF/PJ (mock)',
+    };
+  },
+
+  analytics_cross_pf_pj() {
+    const { gastos: gastosJul, total: totalGastosJul } = gastosDoMes('2026-07');
+    const totalPF = CONTA.disponivel + CONTA.poupanca;
+    return {
+      data: {
+        gerado_em: '2026-07-23T10:00:00Z',
+        entidades: {
+          PF: { titular:'Raul Sousa', entradas_12m:172200.00, saidas_12m:138600.00, fluxo_liquido_12m:33600.00, fatura_cartao_atual:12190.48, divida_total:0 },
+          PJ: { titular:'Sousa Tech Ltda', entradas_12m:840000.00, saidas_12m:620000.00, fluxo_liquido_12m:220000.00, fatura_cartao_atual:0, divida_total:0 },
+        },
+        consolidado: { saldo_disponivel_total: totalPF+CONTA_PJ.disponivel, divida_total:12190.48, patrimonio_liquido_aprox: totalPF+CONTA_PJ.disponivel-12190.48 },
+        cruzamentos: { prolabore_medio_mensal:14350.00, percentual_pj_sobre_pf:75 },
+        sugestao_pj: 'Considere aumentar o pró-labore: a Sousa Tech tem margem operacional saudável de 26%.',
+      },
+      meta: 'extensão · análise PF × PJ (mock)',
+    };
+  },
+
   consultar_saldo() {
     return {
       data: { ...CONTA },
@@ -342,6 +381,16 @@ export const executores = {
 // ── Definição das tools no formato da API da Anthropic ──────────
 // (core.js converte input_schema → inputSchema para o MCP.)
 export const tools = [
+  {
+    name: 'select_account',
+    description: 'Lista TODAS as contas do cliente (PF e PJ) com titular, tipo e saldo disponível. Use SEMPRE antes de consultar saldo, extrato ou transações para obter o accountId correto.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'analytics_cross_pf_pj',
+    description: 'Consolida 12 meses de dados PF e PJ em uma única análise: entradas, saídas, fluxo, dívida, patrimônio e cruzamentos PF×PJ. Use para visão geral financeira.',
+    input_schema: { type: 'object', properties: {} },
+  },
   {
     name: 'consultar_saldo',
     description:
