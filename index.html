@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fina · Fale com o seu dinheiro</title>
+<meta name="description" content="Assistente financeiro com IA que conecta seus bancos e responde em português. Open Finance, 100+ bancos, sem planilhas.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#06070f; --s1:#0c0e1c; --s2:#12152a; --s3:#181c34;
+  --b1:rgba(255,255,255,.08); --b2:rgba(255,255,255,.04);
+  --fina:#7c3aed; --fina-l:#a78bfa; --fina-d:#6d28d9;
+  --fina-g:rgba(124,58,237,.12); --fina-gw:rgba(124,58,237,.08);
+  --money:#10b981; --money-l:#34d399; --money-g:rgba(16,185,129,.1);
+  --blue:#3b82f6; --blue-g:rgba(59,130,246,.1);
+  --warn:#f59e0b; --warn-g:rgba(245,158,11,.1);
+  --neg:#ef4444;
+  --text:#f1f5f9; --muted:#64748b; --muted2:#1e2a3a;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;height:62px;padding:0 52px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,7,15,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);}
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-logo{width:34px;height:34px;background:var(--fina);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;font-weight:900;}
+.nav-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.nav-name em{color:var(--fina-l);font-style:normal;}
+.nav-links{display:flex;gap:28px;font-size:13px;color:var(--muted);}
+.nav-links a:hover{color:var(--text);transition:color .15s;}
+.nav-cta{background:var(--fina);color:#fff;font-size:13px;font-weight:700;padding:9px 22px;border-radius:10px;transition:all .2s;}
+.nav-cta:hover{background:var(--fina-d);transform:translateY(-1px);}
+@media(max-width:768px){.nav{padding:0 24px;} .nav-links{display:none;}}
+
+/* ── HERO ── */
+.hero{min-height:96vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:64px;padding:72px 80px 64px;position:relative;overflow:hidden;}
+@media(max-width:960px){.hero{grid-template-columns:1fr;padding:56px 32px 48px;} .hero-visual{display:none;}}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:56px 56px;pointer-events:none;}
+.glow1{position:absolute;top:-220px;left:-160px;width:860px;height:860px;background:radial-gradient(circle,rgba(124,58,237,.14) 0%,transparent 62%);pointer-events:none;}
+.glow2{position:absolute;bottom:-200px;right:-120px;width:640px;height:640px;background:radial-gradient(circle,rgba(16,185,129,.08) 0%,transparent 62%);pointer-events:none;}
+.hero-tag{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--fina-l);margin-bottom:22px;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(36px,5.2vw,70px);font-weight:800;line-height:1.04;margin-bottom:24px;}
+.hero h1 .acc{color:var(--fina-l);}
+.hero-sub{font-size:17px;color:var(--muted);line-height:1.78;font-weight:300;max-width:520px;margin-bottom:36px;}
+.hero-sub strong{color:var(--text);}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px;}
+.btn-primary{background:var(--fina);color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:9px;transition:all .2s;}
+.btn-primary:hover{background:var(--fina-d);transform:translateY(-1px);box-shadow:0 14px 36px rgba(124,58,237,.4);}
+.btn-outline{background:transparent;color:var(--text);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;border:1.5px solid var(--b1);display:inline-flex;align-items:center;gap:9px;transition:all .2s;}
+.btn-outline:hover{border-color:var(--fina-l);color:var(--fina-l);}
+.hero-stats{display:flex;gap:36px;flex-wrap:wrap;}
+.hstat-n{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--fina-l);}
+.hstat-l{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* Hero chat mockup */
+.hero-visual{position:relative;display:flex;justify-content:center;align-items:center;padding-top:16px;}
+.hero-chat{width:340px;background:var(--s1);border:1px solid var(--b1);border-radius:20px;overflow:hidden;box-shadow:0 36px 90px rgba(0,0,0,.55),0 0 0 1px rgba(124,58,237,.18);}
+.hc-head{background:var(--s2);border-bottom:1px solid var(--b1);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;}
+.hc-brand{display:flex;align-items:center;gap:9px;}
+.hc-logo{width:28px;height:28px;background:var(--fina);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:900;}
+.hc-brand span{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;}
+.hc-brand em{color:var(--fina-l);font-style:normal;font-size:14px;}
+.hc-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--money);}
+.hc-status-dot{width:7px;height:7px;border-radius:50%;background:var(--money);box-shadow:0 0 0 3px rgba(16,185,129,.2);}
+
+.hc-msgs{padding:14px;display:flex;flex-direction:column;gap:10px;min-height:310px;max-height:310px;overflow:hidden;}
+.hc-m{max-width:88%;animation:mpop .3s ease;}
+@keyframes mpop{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
+.hc-m.bot{align-self:flex-start;}
+.hc-m.user{align-self:flex-end;}
+.hc-b{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;}
+.hc-m.bot .hc-b{background:var(--s2);border:1px solid var(--b1);border-bottom-left-radius:4px;color:var(--text);}
+.hc-m.user .hc-b{background:var(--fina);color:#fff;border-bottom-right-radius:4px;}
+.hc-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:13px;margin-top:4px;font-size:12px;}
+.hc-card-hd{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;font-family:'DM Mono',monospace;}
+.hc-spend-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.hc-spend-row .lbl{font-size:12px;color:var(--muted);}
+.hc-spend-row .val{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;}
+.hc-bar{height:4px;background:var(--muted2);border-radius:3px;margin-bottom:8px;overflow:hidden;}
+.hc-bar-f{height:100%;border-radius:3px;}
+.hc-balance{text-align:center;padding:4px 0 6px;}
+.hc-balance .amt{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--money-l);}
+.hc-balance .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+.hc-typing{align-self:flex-start;background:var(--s2);border:1px solid var(--b1);border-radius:14px;border-bottom-left-radius:4px;padding:12px 15px;display:flex;gap:5px;}
+.hc-typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tdot 1.3s infinite;}
+.hc-typing span:nth-child(2){animation-delay:.2s;}
+.hc-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+
+.hc-input-bar{background:var(--s2);border-top:1px solid var(--b1);padding:11px 13px;display:flex;align-items:center;gap:9px;}
+.hc-input-fake{flex:1;background:var(--s3);border:1px solid var(--b1);border-radius:20px;padding:9px 14px;font-size:12px;color:var(--muted);font-family:inherit;}
+.hc-send-btn{width:30px;height:30px;border-radius:50%;background:var(--fina);border:none;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;}
+
+/* floating badge */
+.hc-badge{position:absolute;bottom:-14px;right:-14px;background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:11px 15px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:fl 3s ease-in-out infinite;}
+@keyframes fl{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+.hb-dot{width:10px;height:10px;border-radius:50%;background:var(--money);box-shadow:0 0 0 4px rgba(16,185,129,.18);}
+.hb-t{font-size:12px;font-weight:700;}
+.hb-s{font-size:10.5px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ── STATS BAR ── */
+.sbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);}
+@media(max-width:640px){.sbar{grid-template-columns:1fr 1fr;}}
+.sbar-i{padding:28px 32px;border-right:1px solid var(--b1);}
+.sbar-i:last-child{border-right:none;}
+@media(max-width:640px){.sbar-i:nth-child(2){border-right:none;} .sbar-i:nth-child(3){border-right:none;}}
+.sn{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;margin-bottom:4px;}
+.sl{font-size:12px;color:var(--muted);}
+
+/* ── BANKS ── */
+.banks{padding:52px 80px;}
+@media(max-width:768px){.banks{padding:40px 24px;}}
+.banks-lbl{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:28px;}
+.banks-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.bchip{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:9px 17px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;transition:border-color .2s,transform .2s;}
+.bchip:hover{border-color:rgba(124,58,237,.4);transform:translateY(-1px);}
+.bdot{width:8px;height:8px;border-radius:50%;}
+
+/* ── SECTION COMMONS ── */
+.sec{padding:100px 80px;max-width:1200px;margin:0 auto;}
+@media(max-width:768px){.sec{padding:64px 24px;}}
+.stag{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--fina-l);margin-bottom:14px;}
+.stitle{font-family:'Syne',sans-serif;font-size:clamp(26px,3.5vw,44px);font-weight:800;line-height:1.12;margin-bottom:14px;}
+.ssub{font-size:15px;color:var(--muted);max-width:680px;line-height:1.78;font-weight:300;}
+
+/* ── HOW IT WORKS ── */
+.hiw-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;}
+@media(max-width:768px){.hiw-steps{grid-template-columns:1fr;}}
+.step{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:28px;position:relative;overflow:hidden;transition:border-color .2s;}
+.step:hover{border-color:rgba(124,58,237,.4);}
+.step-bg-n{font-family:'Syne',sans-serif;font-size:80px;font-weight:800;color:rgba(124,58,237,.06);position:absolute;right:14px;top:4px;pointer-events:none;line-height:1;}
+.step-ic{width:46px;height:46px;border-radius:13px;background:var(--fina-g);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;}
+.step-t{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:9px;}
+.step-b{font-size:13.5px;color:var(--muted);line-height:1.68;}
+
+/* ── FEATURES ── */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;}
+@media(max-width:900px){.feat-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.feat-grid{grid-template-columns:1fr;}}
+.feat{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:24px;transition:all .2s;}
+.feat:hover{border-color:rgba(124,58,237,.3);transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,.3);}
+.feat-ic{font-size:28px;margin-bottom:14px;}
+.feat-t{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px;}
+.feat-b{font-size:13px;color:var(--muted);line-height:1.65;}
+
+/* ── DEMO PREVIEW ── */
+.demo-sec{background:var(--s1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:80px;}
+@media(max-width:768px){.demo-sec{padding:56px 24px;}}
+.demo-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+@media(max-width:900px){.demo-inner{grid-template-columns:1fr;}}
+.demo-screen{background:var(--s2);border:1px solid var(--b1);border-radius:16px;padding:16px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.demo-screen-head{background:var(--s3);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.dsh-logo{width:24px;height:24px;background:var(--fina);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:900;}
+.dsh-name{font-size:13px;font-weight:700;}
+.dsh-status{margin-left:auto;font-size:11px;color:var(--money);display:flex;align-items:center;gap:5px;}
+.dsh-dot{width:6px;height:6px;border-radius:50%;background:var(--money);}
+.demo-msg{display:flex;flex-direction:column;gap:10px;}
+.dm-row{display:flex;gap:10px;align-items:flex-start;}
+.dm-row.user{flex-direction:row-reverse;}
+.dm-av{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.dm-av.ai{background:var(--fina-g);}
+.dm-av.u{background:var(--muted2);}
+.dm-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.55;max-width:82%;}
+.dm-row.ai .dm-bubble{background:var(--s3);border:1px solid var(--b1);}
+.dm-row.user .dm-bubble{background:var(--fina);color:#fff;}
+.dm-insight{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(16,185,129,.06));border:1px solid rgba(124,58,237,.25);border-radius:12px;padding:14px;margin-top:4px;}
+.di-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+.di-row .lbl{color:var(--muted);}
+.di-row .val{font-weight:700;font-family:'Syne',sans-serif;}
+.di-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--fina-l);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+
+/* ── PRICING ── */
+.price-toggle{display:flex;align-items:center;gap:14px;margin-top:28px;margin-bottom:48px;}
+.pto{font-size:13px;color:var(--muted);cursor:pointer;transition:color .15s;}
+.pto.on{color:var(--text);font-weight:600;}
+.ptswitch{width:44px;height:24px;background:var(--fina);border-radius:12px;position:relative;cursor:pointer;}
+.ptknob{width:18px;height:18px;border-radius:9px;background:#fff;position:absolute;top:3px;left:3px;transition:transform .22s;}
+.ptswitch.a .ptknob{transform:translateX(20px);}
+.ptbadge{background:var(--money-g);color:var(--money-l);font-size:11px;font-weight:700;padding:3px 11px;border-radius:12px;font-family:'DM Mono',monospace;}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:900px){.pgrid{grid-template-columns:1fr;max-width:380px;margin:0 auto;}}
+.pcard{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:28px;display:flex;flex-direction:column;transition:border-color .2s;}
+.pcard.pop{border-color:var(--fina);background:linear-gradient(135deg,rgba(124,58,237,.08) 0%,var(--s1) 55%);position:relative;}
+.pbadge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--fina);color:#fff;font-size:11px;font-weight:700;padding:4px 18px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.5px;white-space:nowrap;}
+.pc-n{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;}
+.pc-d{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:22px;}
+.pc-price{display:flex;align-items:baseline;gap:3px;margin-bottom:24px;}
+.pc-cur{font-size:15px;color:var(--muted);margin-top:7px;}
+.pc-amt{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;}
+.pc-per{font-size:14px;color:var(--muted);}
+.pc-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1;}
+.pc-feats li{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;}
+.ck{color:var(--money);font-size:14px;flex-shrink:0;margin-top:1px;}
+.nx{color:var(--muted2);font-size:14px;flex-shrink:0;margin-top:1px;}
+.nx+span{color:var(--muted);}
+.pcbtn{display:block;text-align:center;padding:13px;border-radius:10px;font-size:14px;font-weight:700;transition:all .2s;}
+.pcbtn.pri{background:var(--fina);color:#fff;}
+.pcbtn.pri:hover{background:var(--fina-d);}
+.pcbtn.gh{background:transparent;border:1.5px solid var(--b1);color:var(--text);}
+.pcbtn.gh:hover{border-color:var(--fina-l);color:var(--fina-l);}
+
+/* ── SECURITY ── */
+.sec-wrap{background:var(--s1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:80px;}
+@media(max-width:768px){.sec-wrap{padding:56px 24px;}}
+.sec-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+@media(max-width:768px){.sec-inner{grid-template-columns:1fr;gap:40px;}}
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.sbadge{background:var(--s2);border:1px solid var(--b1);border-radius:13px;padding:20px;display:flex;align-items:flex-start;gap:13px;transition:border-color .2s;}
+.sbadge:hover{border-color:rgba(124,58,237,.3);}
+.sb-ic{font-size:26px;flex-shrink:0;}
+.sb-t{font-size:13px;font-weight:700;margin-bottom:3px;}
+.sb-b{font-size:12px;color:var(--muted);line-height:1.55;}
+
+/* ── FAQ ── */
+.faq-wrap{max-width:860px;margin:0 auto;padding:100px 80px;}
+@media(max-width:768px){.faq-wrap{padding:64px 24px;}}
+.faq-list{margin-top:40px;}
+.faq-item{border-bottom:1px solid var(--b1);}
+.faq-q{padding:20px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:15px;font-weight:600;gap:16px;transition:color .15s;}
+.faq-q:hover{color:var(--fina-l);}
+.faq-ch{font-size:22px;color:var(--muted);transition:transform .25s;flex-shrink:0;line-height:1;}
+.faq-item.op .faq-ch{transform:rotate(45deg);color:var(--fina-l);}
+.faq-a{font-size:14px;color:var(--muted);line-height:1.78;max-height:0;overflow:hidden;transition:max-height .3s ease,padding-bottom .3s;font-weight:300;}
+.faq-item.op .faq-a{max-height:300px;padding-bottom:20px;}
+
+/* ── CTA BANNER ── */
+.cta-sec{padding:100px 80px;text-align:center;position:relative;overflow:hidden;}
+@media(max-width:768px){.cta-sec{padding:64px 24px;}}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;height:440px;background:radial-gradient(ellipse,rgba(124,58,237,.18) 0%,transparent 70%);pointer-events:none;}
+.cta-sec h2{font-family:'Syne',sans-serif;font-size:clamp(28px,4.5vw,56px);font-weight:800;margin-bottom:16px;position:relative;line-height:1.1;}
+.cta-sec h2 .acc{color:var(--fina-l);}
+.cta-sec p{font-size:17px;color:var(--muted);margin-bottom:36px;font-weight:300;position:relative;}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;}
+
+/* ── FOOTER ── */
+footer{background:var(--s1);border-top:1px solid var(--b1);padding:40px 80px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
+@media(max-width:768px){footer{padding:32px 24px;flex-direction:column;align-items:flex-start;gap:20px;}}
+.ft-brand{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+.ft-brand em{color:var(--fina-l);font-style:normal;}
+.ft-links{display:flex;gap:20px;font-size:13px;color:var(--muted);flex-wrap:wrap;}
+.ft-links a:hover{color:var(--text);}
+.ft-legal{font-size:11.5px;color:var(--muted);font-family:'DM Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">✦</div>
+    <div class="nav-name">fina<em>.ai</em></div>
+  </div>
+  <div class="nav-links">
+    <a href="#hiw">Como funciona</a>
+    <a href="#features">Funcionalidades</a>
+    <a href="#pricing">Preços</a>
+    <a href="#security">Segurança</a>
+    <a href="fina-chat.html">Demo</a>
+  </div>
+  <a class="nav-cta" href="#pricing">Começar grátis →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="bg-grid"></div>
+  <div class="glow1"></div>
+  <div class="glow2"></div>
+
+  <div class="hero-left">
+    <div class="hero-tag">Assistente Financeiro · Open Finance · 100+ Bancos</div>
+    <h1>Sua IA que <span class="acc">fala</span><br>com o seu<br>dinheiro</h1>
+    <p class="hero-sub">
+      Conecte seus bancos, faça perguntas em português e entenda suas finanças de verdade.<br>
+      <strong>Sem planilhas, sem confusão — só conversa.</strong>
+    </p>
+    <div class="hero-btns">
+      <a class="btn-primary" href="#pricing">Começar grátis →</a>
+      <a class="btn-outline" href="fina-chat.html">▶ Ver demo</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hstat-n">100+</div>
+        <div class="hstat-l">Bancos conectados</div>
+      </div>
+      <div>
+        <div class="hstat-n">64M+</div>
+        <div class="hstat-l">Transações analisadas</div>
+      </div>
+      <div>
+        <div class="hstat-n">175K</div>
+        <div class="hstat-l">Conversas realizadas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-chat">
+      <div class="hc-head">
+        <div class="hc-brand">
+          <div class="hc-logo">✦</div>
+          <span>fina</span><em>.ai</em>
+        </div>
+        <div class="hc-status"><span class="hc-status-dot"></span>Online</div>
+      </div>
+      <div class="hc-msgs" id="heroChat"></div>
+      <div class="hc-input-bar">
+        <div class="hc-input-fake" id="heroPh">Pergunte sobre suas finanças...</div>
+        <button class="hc-send-btn">→</button>
+      </div>
+    </div>
+    <div class="hc-badge">
+      <div class="hb-dot"></div>
+      <div>
+        <div class="hb-t">Open Finance ativo</div>
+        <div class="hb-s">Bradesco · Itaú · Nubank · +97</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="sbar">
+  <div class="sbar-i"><div class="sn" style="color:var(--fina-l)">R$64M+</div><div class="sl">Transações processadas</div></div>
+  <div class="sbar-i"><div class="sn" style="color:var(--money)">100+</div><div class="sl">Instituições financeiras</div></div>
+  <div class="sbar-i"><div class="sn" style="color:var(--blue)">175K</div><div class="sl">Conversas realizadas</div></div>
+  <div class="sbar-i"><div class="sn" style="color:var(--warn)">1M+</div><div class="sl">Mensagens trocadas</div></div>
+</div>
+
+<!-- BANKS -->
+<div class="banks">
+  <div class="banks-lbl">Funciona com os seus bancos via Open Finance</div>
+  <div class="banks-row">
+    <div class="bchip"><span class="bdot" style="background:#CC092F"></span>Bradesco</div>
+    <div class="bchip"><span class="bdot" style="background:#FF6B00"></span>Itaú</div>
+    <div class="bchip"><span class="bdot" style="background:#820AD1"></span>Nubank</div>
+    <div class="bchip"><span class="bdot" style="background:#EC0000"></span>Santander</div>
+    <div class="bchip"><span class="bdot" style="background:#005CA9"></span>Caixa</div>
+    <div class="bchip"><span class="bdot" style="background:#F8B400"></span>Banco do Brasil</div>
+    <div class="bchip"><span class="bdot" style="background:#FF7A00"></span>Inter</div>
+    <div class="bchip"><span class="bdot" style="background:#242424"></span>C6 Bank</div>
+    <div class="bchip"><span class="bdot" style="background:#6366f1"></span>XP</div>
+    <div class="bchip"><span class="bdot" style="background:#64748b"></span>+ 91 mais</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="sec" id="hiw">
+  <div class="stag">Como funciona</div>
+  <h2 class="stitle">Três passos.<br>Zero planilha.</h2>
+  <p class="ssub">A Fina cuida das contas para você. Conecte, pergunte, entenda — simples assim.</p>
+  <div class="hiw-steps">
+    <div class="step">
+      <div class="step-bg-n">01</div>
+      <div class="step-ic">🔗</div>
+      <div class="step-t">Conecte seus bancos</div>
+      <div class="step-b">Via Open Finance oficial, regulado pelo Banco Central. Leva 2 minutos e você autoriza quem quer conectar — sem senhas bancárias, sem risco nenhum.</div>
+    </div>
+    <div class="step">
+      <div class="step-bg-n">02</div>
+      <div class="step-ic">💬</div>
+      <div class="step-t">Pergunte em português</div>
+      <div class="step-b">"Quanto gastei em julho?" "Meu salário caiu?" "Quanto sobrou depois das contas?" — linguagem natural, sem comandos para aprender.</div>
+    </div>
+    <div class="step">
+      <div class="step-bg-n">03</div>
+      <div class="step-ic">✨</div>
+      <div class="step-t">Entenda de verdade</div>
+      <div class="step-b">A Fina cruza dados de todos os seus bancos, identifica padrões e conta o que importa — com contexto e insights, não com números soltos.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec" id="features" style="padding-top:0;">
+  <div class="stag">Funcionalidades</div>
+  <h2 class="stitle">Tudo para entender<br>seu dinheiro de verdade</h2>
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-ic">🏦</div>
+      <div class="feat-t">Multi-banco</div>
+      <div class="feat-b">Todos seus bancos, investimentos e cartões numa só conversa. Chega de abrir app por app.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic">🧠</div>
+      <div class="feat-t">IA que entende contexto</div>
+      <div class="feat-b">Não é chatbot com respostas prontas. A Fina lê seus dados e raciocina em cima deles, como um contador pessoal.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic">📊</div>
+      <div class="feat-t">Relatórios automáticos</div>
+      <div class="feat-b">Resumos semanais e mensais enviados direto pra você. Zero esforço — ela faz, você lê.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic">🔔</div>
+      <div class="feat-t">Alertas proativos</div>
+      <div class="feat-b">"Você gastou 40% a mais em delivery essa semana." A Fina te avisa antes que o problema apareça no extrato.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic">🔒</div>
+      <div class="feat-t">Só leitura, sempre</div>
+      <div class="feat-b">A Fina nunca faz transferências, nunca pede sua senha e nunca toca no seu dinheiro. Só observa e informa.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic">🇧🇷</div>
+      <div class="feat-t">100% Open Finance</div>
+      <div class="feat-b">Regulado pelo Banco Central do Brasil. Suas autorizações são gerenciadas pelo próprio BCB — não pela Fina.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO PREVIEW -->
+<section class="demo-sec" id="demo">
+  <div class="demo-inner">
+    <div>
+      <div class="stag">Demo ao vivo</div>
+      <h2 class="stitle">Pergunte qualquer coisa<br>sobre suas finanças</h2>
+      <p class="ssub" style="margin-bottom:28px;">A Fina entende perguntas em português natural e busca os dados nos seus bancos em tempo real — sem formulários, sem menus.</p>
+      <a class="btn-primary" href="fina-chat.html" style="display:inline-flex;">Abrir demo completa →</a>
+    </div>
+    <div class="demo-screen">
+      <div class="demo-screen-head">
+        <div class="dsh-logo">✦</div>
+        <div class="dsh-name">fina.ai</div>
+        <div class="dsh-status"><span class="dsh-dot"></span>Online · Open Finance ativo</div>
+      </div>
+      <div class="demo-msg">
+        <div class="dm-row ai">
+          <div class="dm-av ai">✦</div>
+          <div class="dm-bubble">Oi! 👋 Sou a Fina. Conectei com seus 3 bancos. Como posso ajudar?</div>
+        </div>
+        <div class="dm-row user">
+          <div class="dm-av u">😊</div>
+          <div class="dm-bubble">Quanto gastei em julho e onde foi mais?</div>
+        </div>
+        <div class="dm-row ai">
+          <div class="dm-av ai">✦</div>
+          <div>
+            <div class="dm-bubble">Em julho você gastou <strong>R$ 4.823,40</strong> nos seus 3 bancos. O maior gasto foi em alimentação: R$ 1.842 — R$ 357 a mais que junho 📈</div>
+            <div class="dm-insight">
+              <div class="di-tag">Breakdown por categoria</div>
+              <div class="di-row"><span class="lbl">🍔 Alimentação</span><span class="val" style="color:var(--fina-l)">R$ 1.842</span></div>
+              <div class="di-row"><span class="lbl">🛒 Mercado</span><span class="val" style="color:var(--blue)">R$ 1.540</span></div>
+              <div class="di-row"><span class="lbl">🚗 Transporte</span><span class="val" style="color:var(--money)">R$ 712</span></div>
+              <div class="di-row"><span class="lbl">📱 Assinaturas</span><span class="val" style="color:var(--warn)">R$ 729</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dm-row user">
+          <div class="dm-av u">😊</div>
+          <div class="dm-bubble">Qual meu saldo agora?</div>
+        </div>
+        <div class="dm-row ai">
+          <div class="dm-av ai">✦</div>
+          <div class="dm-bubble">Você tem <strong>R$ 8.427,63</strong> no Bradesco + <strong>R$ 2.340,00</strong> no Nubank = <strong>R$ 10.767,63</strong> disponíveis no total 💰</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="pricing">
+  <div class="stag">Preços</div>
+  <h2 class="stitle">Comece grátis.<br>Evolua quando quiser.</h2>
+  <p class="ssub">Cancele a qualquer momento. Sem multa, sem burocracia.</p>
+  <div class="price-toggle">
+    <span class="pto on" id="ptM" onclick="setP('m')">Mensal</span>
+    <div class="ptswitch" id="pts" onclick="tgP()"><div class="ptknob"></div></div>
+    <span class="pto" id="ptA" onclick="setP('a')">Anual</span>
+    <span class="ptbadge">2 meses grátis</span>
+  </div>
+  <div class="pgrid">
+    <div class="pcard">
+      <div class="pc-n">Básico</div>
+      <div class="pc-d">Para começar a entender suas finanças sem custo.</div>
+      <div class="pc-price"><span class="pc-amt">R$0</span><span class="pc-per">/mês</span></div>
+      <ul class="pc-feats">
+        <li><span class="ck">✓</span> 1 banco conectado</li>
+        <li><span class="ck">✓</span> 50 mensagens por mês</li>
+        <li><span class="ck">✓</span> Consulta de saldo e extrato</li>
+        <li><span class="ck">✓</span> 1 agente inteligente</li>
+        <li><span class="nx">✗</span><span>Relatórios automáticos</span></li>
+        <li><span class="nx">✗</span><span>Alertas proativos</span></li>
+        <li><span class="nx">✗</span><span>Múltiplos bancos</span></li>
+      </ul>
+      <a class="pcbtn gh" href="#">Começar grátis</a>
+    </div>
+    <div class="pcard pop">
+      <div class="pbadge">✦ Mais popular</div>
+      <div class="pc-n">Pro</div>
+      <div class="pc-d">Para quem leva as finanças a sério.</div>
+      <div class="pc-price"><span class="pc-cur">R$</span><span class="pc-amt" id="proP">29</span><span class="pc-per">/mês</span></div>
+      <ul class="pc-feats">
+        <li><span class="ck">✓</span> Até 5 bancos conectados</li>
+        <li><span class="ck">✓</span> Mensagens ilimitadas</li>
+        <li><span class="ck">✓</span> Gastos por categoria</li>
+        <li><span class="ck">✓</span> 2 agentes inteligentes</li>
+        <li><span class="ck">✓</span> Relatórios semanais</li>
+        <li><span class="ck">✓</span> Alertas proativos</li>
+        <li><span class="nx">✗</span><span>Suporte prioritário</span></li>
+      </ul>
+      <a class="pcbtn pri" href="#">Assinar Pro →</a>
+    </div>
+    <div class="pcard">
+      <div class="pc-n">Ultra</div>
+      <div class="pc-d">Para controle financeiro total.</div>
+      <div class="pc-price"><span class="pc-cur">R$</span><span class="pc-amt" id="ultP">99</span><span class="pc-per">/mês</span></div>
+      <ul class="pc-feats">
+        <li><span class="ck">✓</span> Bancos ilimitados</li>
+        <li><span class="ck">✓</span> Mensagens ilimitadas</li>
+        <li><span class="ck">✓</span> Categorização avançada</li>
+        <li><span class="ck">✓</span> Até 10 agentes</li>
+        <li><span class="ck">✓</span> Relatórios diários</li>
+        <li><span class="ck">✓</span> Alertas avançados com IA</li>
+        <li><span class="ck">✓</span> Suporte prioritário</li>
+      </ul>
+      <a class="pcbtn gh" href="#">Assinar Ultra →</a>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="sec-wrap" id="security">
+  <div class="sec-inner">
+    <div>
+      <div class="stag">Segurança</div>
+      <h2 class="stitle">Segurança de<br>nível bancário</h2>
+      <p class="ssub">Seus dados financeiros são os mais sensíveis que existem. A Fina foi construída com isso em mente — desde o primeiro dia.</p>
+    </div>
+    <div class="sec-grid">
+      <div class="sbadge"><div class="sb-ic">🏛️</div><div><div class="sb-t">Regulado pelo BCB</div><div class="sb-b">Open Finance oficial, regulamentado pelo Banco Central do Brasil.</div></div></div>
+      <div class="sbadge"><div class="sb-ic">👁️</div><div><div class="sb-t">Só leitura</div><div class="sb-b">A Fina nunca escreve, nunca transfere, nunca modifica nada na sua conta.</div></div></div>
+      <div class="sbadge"><div class="sb-ic">🔐</div><div><div class="sb-t">Nunca vê sua senha</div><div class="sb-b">Acesso via token OAuth direto com seu banco — sua senha nunca passa por nós.</div></div></div>
+      <div class="sbadge"><div class="sb-ic">🛡️</div><div><div class="sb-t">Criptografia total</div><div class="sb-b">Dados protegidos em trânsito (TLS 1.3) e em repouso (AES-256).</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<div class="faq-wrap" id="faq">
+  <div class="stag">Dúvidas frequentes</div>
+  <h2 class="stitle">Respondendo suas perguntas</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">A Fina pode fazer transferências ou pagamentos?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Não. A Fina tem acesso somente leitura às suas contas via Open Finance. Ela nunca faz transferências, pagamentos ou qualquer movimentação financeira. Só observa e informa.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">Quais bancos são suportados?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Todos os bancos participantes do Open Finance Brasil — mais de 100 instituições, incluindo Bradesco, Itaú, Nubank, Santander, Caixa, Banco do Brasil, Inter, C6 Bank, XP e muitos outros.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">Preciso dar minha senha bancária?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Nunca. A conexão é via Open Finance oficial — você se autentica diretamente no app do seu banco, e o token de acesso é enviado para a Fina. Sua senha nunca sai do banco.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">Como meus dados são armazenados?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Seus dados são criptografados em repouso com AES-256 e em trânsito com TLS 1.3. A Fina armazena só o necessário para personalizar sua experiência — você pode solicitar exclusão a qualquer momento.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">Posso cancelar quando quiser?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Sim. Cancele a qualquer momento, sem multa. Você também pode revogar o acesso da Fina aos seus bancos diretamente pelo app do seu banco ou pelo portal do Open Finance.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="tgFaq(this)">A Fina funciona com investimentos e cartão de crédito?<span class="faq-ch">+</span></div>
+      <div class="faq-a">Sim. A Fina acessa conta corrente, poupança, cartões de crédito, investimentos (CDB, Tesouro, fundos) e outros produtos disponíveis via Open Finance.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-sec">
+  <div class="cta-glow"></div>
+  <h2>Pronto para entender<br>seu <span class="acc">dinheiro de verdade</span>?</h2>
+  <p>Comece grátis. Sem cartão de crédito, sem compromisso.</p>
+  <div class="cta-btns">
+    <a class="btn-primary" href="#pricing">Criar conta grátis →</a>
+    <a class="btn-outline" href="fina-chat.html">▶ Ver demo primeiro</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-brand">✦ fina<em>.ai</em></div>
+  <div class="ft-links">
+    <a href="#hiw">Como funciona</a>
+    <a href="#pricing">Preços</a>
+    <a href="#security">Segurança</a>
+    <a href="fina-chat.html">Demo</a>
+    <a href="#">Privacidade</a>
+    <a href="#">Termos</a>
+  </div>
+  <div class="ft-legal">© 2026 Fina.ai · Open Finance regulado pelo BCB · Dados de demonstração fictícios</div>
+</footer>
+
+<script>
+/* ── FAQ ── */
+function tgFaq(el){
+  var item = el.parentElement;
+  var was = item.classList.contains('op');
+  document.querySelectorAll('.faq-item.op').forEach(function(i){i.classList.remove('op');});
+  if(!was) item.classList.add('op');
+}
+
+/* ── PRICING TOGGLE ── */
+var isAnn = false;
+var MP = {pro:29, ult:99};
+var AP = {pro:24, ult:82};
+function setP(t){ isAnn = t==='a'; upP(); }
+function tgP(){ isAnn = !isAnn; upP(); }
+function upP(){
+  var p = isAnn ? AP : MP;
+  document.getElementById('proP').textContent = p.pro;
+  document.getElementById('ultP').textContent = p.ult;
+  document.getElementById('pts').classList.toggle('a', isAnn);
+  document.getElementById('ptM').classList.toggle('on', !isAnn);
+  document.getElementById('ptA').classList.toggle('on', isAnn);
+}
+
+/* ── HERO CHAT ANIMATION ── */
+(function(){
+  var box = document.getElementById('heroChat');
+  var ph  = document.getElementById('heroPh');
+  if(!box) return;
+
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function addEl(cls, html){
+    var el = document.createElement('div');
+    el.className = cls;
+    el.innerHTML = html;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+  }
+
+  var spendCard =
+    '<div class="hc-card">' +
+    '<div class="hc-card-hd">Gastos · julho 2026</div>' +
+    '<div class="hc-spend-row"><span class="lbl">🍔 Alimentação</span><span class="val" style="color:var(--fina-l)">R$ 1.842</span></div>' +
+    '<div class="hc-bar"><div class="hc-bar-f" style="width:38%;background:var(--fina)"></div></div>' +
+    '<div class="hc-spend-row"><span class="lbl">🛒 Mercado</span><span class="val" style="color:var(--blue)">R$ 1.540</span></div>' +
+    '<div class="hc-bar"><div class="hc-bar-f" style="width:32%;background:var(--blue)"></div></div>' +
+    '<div class="hc-spend-row"><span class="lbl">🚗 Transporte</span><span class="val" style="color:var(--money)">R$ 712</span></div>' +
+    '<div class="hc-bar"><div class="hc-bar-f" style="width:15%;background:var(--money)"></div></div>' +
+    '<div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:\'DM Mono\',monospace">Total: R$ 4.823,40</div>' +
+    '</div>';
+
+  var balCard =
+    '<div class="hc-card">' +
+    '<div class="hc-card-hd">Saldo total · 2 bancos</div>' +
+    '<div class="hc-balance"><div class="amt">R$ 10.767,63</div><div class="lbl">Bradesco + Nubank</div></div>' +
+    '</div>';
+
+  async function run(){
+    await wait(700);
+    addEl('hc-m bot', '<div class="hc-b">Oi! 👋 Sou a Fina. Me pergunte qualquer coisa sobre suas finanças.</div>');
+
+    await wait(2200);
+    ph.textContent = 'Quanto gastei em julho?';
+
+    await wait(2800);
+    addEl('hc-m user', '<div class="hc-b">Quanto gastei em julho?</div>');
+    ph.textContent = 'Pergunte sobre suas finanças...';
+
+    await wait(3500);
+    var typing = addEl('hc-typing', '<span></span><span></span><span></span>');
+
+    await wait(5000);
+    typing.remove();
+    addEl('hc-m bot', '<div class="hc-b">Analisando julho… 🔍</div>');
+    addEl('hc-m bot', spendCard);
+
+    await wait(5600);
+    addEl('hc-m bot', '<div class="hc-b">Total: <strong>R$ 4.823</strong>. Alimentação liderou — R$ 357 a mais que junho 📈</div>');
+
+    await wait(8500);
+    ph.textContent = 'Qual meu saldo agora?';
+
+    await wait(9200);
+    addEl('hc-m user', '<div class="hc-b">Qual meu saldo agora?</div>');
+    ph.textContent = 'Pergunte sobre suas finanças...';
+
+    await wait(9900);
+    var t2 = addEl('hc-typing', '<span></span><span></span><span></span>');
+
+    await wait(11200);
+    t2.remove();
+    addEl('hc-m bot', balCard);
+    addEl('hc-m bot', '<div class="hc-b">Você tem <strong>R$ 10.767,63</strong> disponíveis no total 💰</div>');
+  }
+
+  run();
+})();
+</script>
+</body>
+</html>

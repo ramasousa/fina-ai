@@ -1,0 +1,27 @@
+# ─────────────────────────────────────────────────────────────
+# Blueprint do Render — deploy da Fina.ai sem notebook.
+#
+# Como usar (tudo pelo navegador, funciona no iPad):
+#   1. Acesse https://render.com e entre com o GitHub.
+#   2. New → Blueprint → escolha o repositório ramasousa/fina-ai.
+#   3. Confirme. O Render lê este arquivo e sobe o serviço.
+#   4. Você recebe uma URL pública (ex.: https://fina-ai-demo.onrender.com).
+#      Abra a URL e o chat já funciona em modo simulado.
+#
+# Para usar o Claude de verdade:
+#   - No painel do Render, vá em Environment e adicione:
+#       ANTHROPIC_API_KEY = sua-chave-aqui
+#
+# Dados 100% fictícios (mock-bank.js) — nenhuma conta real é exposta.
+# Plano free: o serviço "dorme" após inatividade; a 1ª chamada leva ~50s.
+# ─────────────────────────────────────────────────────────────
+services:
+  - type: web
+    name: fina-ai-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false

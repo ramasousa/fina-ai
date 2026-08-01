@@ -1,0 +1,17 @@
+{
+  "name": "fina-ai",
+  "version": "1.0.0",
+  "description": "Fina.ai — Assistente financeiro com IA. Open Finance, 100+ bancos, chat em português natural.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fina · Chat Demo · Seu assistente financeiro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#06070f; --s1:#0c0e1c; --s2:#12152a; --s3:#181c34;
+  --b1:rgba(255,255,255,.08);
+  --fina:#7c3aed; --fina-d:#6d28d9; --fina-l:#a78bfa;
+  --money:#10b981; --money-t:#34d399;
+  --neg:#ef4444;
+  --text:#f1f5f9; --muted:#64748b;
+  /* app surfaces */
+  --app-bg:#f4f6fb; --app-card:#ffffff; --app-ink:#0f172a; --app-mut:#8a95a8; --app-line:#e8ecf2;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+
+/* BACKDROP */
+.backdrop{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+.glow{position:fixed;top:-180px;left:50%;transform:translateX(-50%);width:800px;height:560px;background:radial-gradient(circle,rgba(124,58,237,.13) 0%,transparent 62%);pointer-events:none;}
+
+/* OUTER WRAP */
+.wrap{position:relative;max-width:980px;margin:0 auto;padding:36px 20px 64px;display:flex;flex-direction:column;align-items:center;}
+
+/* TOP NAV BAR */
+.top-bar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.top-brand{display:flex;align-items:center;gap:9px;}
+.top-logo{width:32px;height:32px;background:var(--fina);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;}
+.top-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+.top-name em{color:var(--fina-l);font-style:normal;}
+.top-back{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;transition:color .15s;}
+.top-back:hover{color:var(--text);}
+
+/* PAGE HEADING */
+.page-tag{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--fina-l);margin-bottom:12px;}
+.page-title{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,38px);font-weight:800;text-align:center;line-height:1.1;margin-bottom:12px;}
+.page-title .acc{color:var(--fina-l);}
+.page-sub{font-size:14px;color:var(--muted);text-align:center;max-width:560px;line-height:1.68;font-weight:300;margin-bottom:28px;}
+.page-sub b{color:var(--text);font-weight:500;}
+
+/* ── PHONE ── */
+.phone{width:390px;max-width:100%;height:820px;max-height:88vh;background:#000;border-radius:46px;padding:11px;box-shadow:0 44px 100px rgba(0,0,0,.65),0 0 0 1px rgba(124,58,237,.18);position:relative;}
+.screen{width:100%;height:100%;background:var(--app-bg);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:144px;height:26px;background:#000;border-radius:0 0 16px 16px;z-index:40;}
+
+/* STATUS BAR */
+.statusbar{height:40px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 5px;font-size:12.5px;font-weight:700;background:var(--fina);color:#fff;}
+.statusbar .r{display:flex;gap:6px;align-items:center;font-size:11px;}
+
+/* APP HEADER */
+.app-head{background:linear-gradient(160deg,var(--fina) 0%,var(--fina-d) 100%);color:#fff;padding:5px 18px 18px;flex-shrink:0;}
+.ah-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.ah-brand{display:flex;align-items:center;gap:9px;}
+.ah-mark{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;backdrop-filter:blur(4px);}
+.ah-name{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;}
+.ah-name em{color:rgba(255,255,255,.7);font-style:normal;}
+.ah-icons{display:flex;gap:14px;font-size:18px;opacity:.9;}
+.ah-greet{font-size:13px;opacity:.88;}
+.ah-greet b{font-weight:700;}
+
+/* ASSISTANT BAR */
+.asst-bar{background:#fff;border-bottom:1px solid var(--app-line);padding:11px 16px;display:flex;align-items:center;gap:11px;flex-shrink:0;}
+.asst-av{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--fina),var(--fina-d));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(124,58,237,.35);font-size:16px;color:#fff;}
+.asst-meta{flex:1;min-width:0;}
+.asst-name{font-size:14px;font-weight:700;color:var(--app-ink);display:flex;align-items:center;gap:6px;}
+.asst-pw{font-size:9.5px;font-weight:600;color:var(--fina);background:rgba(124,58,237,.1);padding:2px 7px;border-radius:6px;font-family:'DM Mono',monospace;}
+.asst-status{font-size:11px;color:var(--money);display:flex;align-items:center;gap:5px;margin-top:1px;}
+.asst-dot{width:6px;height:6px;border-radius:50%;background:var(--money-t);box-shadow:0 0 0 3px rgba(52,211,153,.2);}
+
+/* CHAT AREA */
+.chat{flex:1;overflow-y:auto;padding:16px 14px 8px;background:var(--app-bg);display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
+.chat::-webkit-scrollbar{width:0;}
+
+.day-sep{align-self:center;font-size:10.5px;color:var(--app-mut);background:rgba(138,149,168,.14);padding:3px 13px;border-radius:20px;font-family:'DM Mono',monospace;}
+
+.msg{max-width:84%;display:flex;flex-direction:column;gap:4px;animation:pop .28s ease;}
+@keyframes pop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.bot{align-self:flex-start;align-items:flex-start;}
+.bubble{padding:11px 14px;border-radius:18px;font-size:13.5px;line-height:1.52;word-wrap:break-word;}
+.msg.user .bubble{background:var(--fina);color:#fff;border-bottom-right-radius:5px;}
+.msg.bot .bubble{background:#fff;color:var(--app-ink);border:1px solid var(--app-line);border-bottom-left-radius:5px;box-shadow:0 1px 4px rgba(15,23,42,.05);}
+.msg .time{font-size:9.5px;color:var(--app-mut);padding:0 6px;font-family:'DM Mono',monospace;}
+
+/* TOOL CALL CHIP */
+.toolcall{align-self:flex-start;max-width:88%;background:#0d0f1e;border:1px solid rgba(124,58,237,.25);border-radius:12px;padding:9px 13px;font-family:'DM Mono',monospace;animation:pop .28s ease;}
+.tc-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#9b87f5;}
+.tc-spin{width:11px;height:11px;border:1.6px solid rgba(124,58,237,.3);border-top-color:var(--fina-l);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.tc-check{color:var(--money-t);font-size:12px;}
+.tc-name{color:#f1f5f9;font-weight:500;}
+.tc-meta{font-size:9.5px;color:#475569;margin-top:5px;padding-left:19px;line-height:1.5;}
+.tc-meta .k{color:#9b87f5;}
+
+/* RICH CARDS */
+.rich{background:#fff;border:1px solid var(--app-line);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(15,23,42,.07);max-width:100%;animation:pop .3s ease;align-self:flex-start;width:100%;}
+.rich-head{background:linear-gradient(135deg,var(--fina),var(--fina-d));color:#fff;padding:13px 16px;}
+.rh-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;opacity:.85;font-family:'DM Mono',monospace;}
+.rh-acct{font-size:12px;opacity:.9;margin-top:2px;}
+
+/* balance card */
+.bal-main{padding:15px 16px 6px;}
+.bal-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;}
+.bal-k{font-size:12px;color:var(--app-mut);}
+.bal-v{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--app-ink);}
+.bal-v.big{font-size:26px;color:var(--fina);}
+.bal-v.blocked{color:var(--app-mut);font-size:14px;font-weight:700;}
+.bal-div{height:1px;background:var(--app-line);margin:4px 16px;}
+.bal-foot{padding:8px 16px 14px;font-size:10.5px;color:var(--app-mut);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;}
+.bal-foot .lock{color:var(--fina);}
+
+/* statement list */
+.stmt-list{padding:4px 0 6px;}
+.stmt-day{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--app-mut);padding:9px 16px 4px;font-family:'DM Mono',monospace;}
+.stmt-item{display:flex;align-items:center;gap:11px;padding:9px 16px;}
+.stmt-item+.stmt-item{border-top:1px solid var(--app-line);}
+.si-ic{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.si-ic.in{background:rgba(16,185,129,.12);}
+.si-ic.out{background:rgba(124,58,237,.1);}
+.si-body{flex:1;min-width:0;}
+.si-desc{font-size:13px;font-weight:600;color:var(--app-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.si-cat{font-size:10.5px;color:var(--app-mut);}
+.si-val{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;white-space:nowrap;}
+.si-val.in{color:var(--money);}
+.si-val.out{color:var(--app-ink);}
+
+/* spending bars */
+.spend{padding:12px 16px 14px;}
+.sp-row{margin-bottom:11px;}
+.sp-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.sp-top .cat{color:var(--app-ink);font-weight:600;}
+.sp-top .val{color:var(--app-mut);font-family:'Syne',sans-serif;font-weight:700;}
+.sp-track{height:6px;background:var(--app-line);border-radius:5px;overflow:hidden;}
+.sp-fill{height:100%;border-radius:5px;}
+
+/* investments card */
+.inv-list{padding:4px 0 6px;}
+.inv-item{display:flex;align-items:center;gap:11px;padding:10px 16px;}
+.inv-item+.inv-item{border-top:1px solid var(--app-line);}
+.inv-ic{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(59,130,246,.1);}
+.inv-body{flex:1;min-width:0;}
+.inv-name{font-size:13px;font-weight:600;color:var(--app-ink);}
+.inv-type{font-size:10.5px;color:var(--app-mut);}
+.inv-right{text-align:right;}
+.inv-val{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;color:var(--app-ink);}
+.inv-yield{font-size:10.5px;color:var(--money);}
+
+/* TYPING INDICATOR */
+.typing{align-self:flex-start;background:#fff;border:1px solid var(--app-line);border-radius:18px;border-bottom-left-radius:5px;padding:13px 16px;display:flex;gap:5px;box-shadow:0 1px 4px rgba(15,23,42,.05);}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--app-mut);animation:blink 1.3s infinite;}
+.typing i:nth-child(2){animation-delay:.2s;}
+.typing i:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+
+/* CHIPS */
+.chips{flex-shrink:0;display:flex;gap:8px;padding:8px 12px 4px;overflow-x:auto;background:var(--app-bg);}
+.chips::-webkit-scrollbar{height:0;}
+.chip{flex-shrink:0;background:#fff;border:1px solid var(--app-line);color:var(--fina);font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.chip:hover{background:var(--fina);color:#fff;border-color:var(--fina);}
+.chip:active{transform:scale(.96);}
+
+/* INPUT BAR */
+.inputbar{flex-shrink:0;background:#fff;border-top:1px solid var(--app-line);padding:10px 14px 18px;display:flex;align-items:center;gap:9px;}
+.inputbar input{flex:1;border:1px solid var(--app-line);background:var(--app-bg);border-radius:22px;padding:11px 16px;font-size:13.5px;font-family:inherit;color:var(--app-ink);outline:none;transition:border-color .15s;}
+.inputbar input:focus{border-color:var(--fina);background:#fff;}
+.send-btn{width:42px;height:42px;border-radius:50%;background:var(--fina);border:none;color:#fff;font-size:17px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.send-btn:hover{background:var(--fina-d);}
+.send-btn:active{transform:scale(.92);}
+
+/* FOOTER NOTE */
+.foot-note{margin-top:28px;font-size:11.5px;color:var(--muted);text-align:center;max-width:520px;line-height:1.72;font-family:'DM Mono',monospace;}
+.foot-note b{color:var(--fina-l);}
+
+@media(max-width:480px){
+  .wrap{padding:16px 0 40px;}
+  .phone{width:100%;height:100vh;max-height:none;border-radius:0;padding:0;box-shadow:none;}
+  .screen{border-radius:0;}
+  .notch{display:none;}
+  .top-bar,.page-tag,.page-title,.page-sub,.foot-note{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="backdrop"></div>
+<div class="glow"></div>
+
+<div class="wrap">
+  <div class="top-bar">
+    <div class="top-brand">
+      <div class="top-logo">✦</div>
+      <div class="top-name">fina<em>.ai</em></div>
+    </div>
+    <a class="top-back" href="index.html">← Voltar</a>
+  </div>
+
+  <div class="page-tag">Demo ao vivo · Assistente Financeiro</div>
+  <h1 class="page-title">Fale com seu dinheiro, <span class="acc">em português</span></h1>
+  <p class="page-sub">Pergunte sobre <b>saldo</b>, <b>extrato</b>, <b>gastos</b>, <b>investimentos</b> ou <b>PIX</b> em linguagem natural — a Fina interpreta e consulta seus bancos via Open Finance.</p>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="r">5G &nbsp;●●● &nbsp;🔋</span>
+      </div>
+
+      <div class="app-head">
+        <div class="ah-row">
+          <div class="ah-brand">
+            <div class="ah-mark">✦</div>
+            <div class="ah-name">fina<em>.ai</em></div>
+          </div>
+          <div class="ah-icons">🔔 👤</div>
+        </div>
+        <div class="ah-greet">Olá, <b>Rafael</b> 👋 — 3 bancos conectados</div>
+      </div>
+
+      <div class="asst-bar">
+        <div class="asst-av">✦</div>
+        <div class="asst-meta">
+          <div class="asst-name">Fina <span class="asst-pw">IA financeira</span></div>
+          <div class="asst-status"><span class="asst-dot"></span>Online · Open Finance ativo</div>
+        </div>
+      </div>
+
+      <div class="chat" id="chat">
+        <div class="day-sep">Hoje · 1 ago 2026</div>
+      </div>
+
+      <div class="chips" id="chips">
+        <div class="chip" data-q="Qual é o meu saldo total?">💰 Saldo total</div>
+        <div class="chip" data-q="Quero ver meu extrato">📄 Extrato</div>
+        <div class="chip" data-q="Quanto gastei esse mês?">📊 Gastos do mês</div>
+        <div class="chip" data-q="Meus últimos PIX">⚡ PIX recentes</div>
+        <div class="chip" data-q="Ver meus investimentos">📈 Investimentos</div>
+      </div>
+
+      <div class="inputbar">
+        <input id="input" type="text" placeholder="Pergunte sobre saldo, extrato, gastos..." autocomplete="off">
+        <button class="send-btn" id="send" aria-label="Enviar">&#10148;</button>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="foot-note">Demo com dados fictícios. Com <b>backend ativo</b> (<code>server.js</code>) e <b>ANTHROPIC_API_KEY</b>, o chat usa o Claude de verdade; caso contrário, roda em modo simulado. Sem conexão real com bancos.</p>
+</div>
+
+<script>
+(function(){
+  var chat = document.getElementById('chat');
+  var input = document.getElementById('input');
+  var send = document.getElementById('send');
+  var chips = document.getElementById('chips');
+
+  var BRL = function(n){ return 'R$ ' + n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  function nowStr(){ return '09:41'; }
+  function scrollDown(){ chat.scrollTop = chat.scrollHeight; }
+
+  /* ── DADOS MOCK ── */
+  var ACCOUNTS = [
+    { bank:'Bradesco', ag:'1234-5', conta:'56789-0', disponivel:8427.63, bloqueado:120.00, limite:5000.00, color:'#CC092F' },
+    { bank:'Nubank', conta:'789.123-0', disponivel:2340.00, bloqueado:0, limite:10000.00, color:'#820AD1' },
+    { bank:'Inter', conta:'456.789-0', disponivel:1893.21, bloqueado:0, limite:3000.00, color:'#FF7A00' }
+  ];
+  var TOTAL_SALDO = ACCOUNTS.reduce(function(s,a){return s+a.disponivel;},0);
+
+  var EXTRATO = [
+    {day:'Hoje · 1 ago',items:[
+      {desc:'PIX recebido · João P. Silva',cat:'Transferência recebida',val:1200.00,dir:'in',ic:'⚡'},
+      {desc:'Rappi · Pedido #4421',cat:'Alimentação',val:-68.90,dir:'out',ic:'🛵'}
+    ]},
+    {day:'Ontem · 31 jul',items:[
+      {desc:'Supermercado Pão de Açúcar',cat:'Compra no débito',val:-342.18,dir:'out',ic:'🛒'},
+      {desc:'iFood · Pedido #8842',cat:'Alimentação',val:-78.50,dir:'out',ic:'🍔'},
+      {desc:'Uber',cat:'Transporte',val:-23.40,dir:'out',ic:'🚗'}
+    ]},
+    {day:'30 jul',items:[
+      {desc:'PIX enviado · Maria Souza',cat:'Transferência enviada',val:-500.00,dir:'out',ic:'⚡'},
+      {desc:'Salário · Empresa Tech Ltda',cat:'Crédito em conta',val:8200.00,dir:'in',ic:'💼'}
+    ]}
+  ];
+
+  var PIX = [
+    {desc:'Recebido · João P. Silva',val:1200.00,dir:'in',when:'Hoje 08:12',ic:'⚡'},
+    {desc:'Enviado · Maria Souza',val:-500.00,dir:'out',when:'30 jul 19:40',ic:'⚡'},
+    {desc:'Enviado · Padaria da Vila',val:-34.00,dir:'out',when:'28 jul 07:55',ic:'⚡'},
+    {desc:'Recebido · Carlos Lima',val:250.00,dir:'in',when:'25 jul 14:22',ic:'⚡'}
+  ];
+
+  var GASTOS = [
+    {cat:'🍔 Alimentação',val:1842.30,pct:38,color:'#7c3aed'},
+    {cat:'🛒 Mercado',val:1540.00,pct:32,color:'#3b82f6'},
+    {cat:'🚗 Transporte',val:712.40,pct:15,color:'#10b981'},
+    {cat:'📱 Assinaturas',val:728.70,pct:15,color:'#f59e0b'}
+  ];
+  var GASTO_TOTAL = 4823.40;
+
+  var INVESTIMENTOS = [
+    {name:'Tesouro Direto IPCA+',type:'Renda Fixa',val:12400.00,yield:'+11,4% a.a.',ic:'🏛️'},
+    {name:'CDB Bradesco 120%CDI',type:'Renda Fixa',val:8750.00,yield:'+14,2% a.a.',ic:'🏦'},
+    {name:'Fundo Multimercado XP',type:'Fundos',val:5320.00,yield:'+8,7% a.a.',ic:'📊'},
+    {name:'Ações PETR4 / VALE3',type:'Renda Variável',val:3180.00,yield:'+22,1% no ano',ic:'📈'}
+  ];
+  var INV_TOTAL = INVESTIMENTOS.reduce(function(s,i){return s+i.val;},0);
+
+  /* ── RENDER HELPERS ── */
+  function addUser(text){
+    var m = document.createElement('div');
+    m.className = 'msg user';
+    m.innerHTML = '<div class="bubble"></div><div class="time">'+nowStr()+'</div>';
+    m.querySelector('.bubble').textContent = text;
+    chat.appendChild(m); scrollDown();
+  }
+
+  function addBotText(html){
+    var m = document.createElement('div');
+    m.className = 'msg bot';
+    m.innerHTML = '<div class="bubble">'+html+'</div><div class="time">'+nowStr()+' · Fina ✦</div>';
+    chat.appendChild(m); scrollDown();
+    return m;
+  }
+
+  function addRich(node){ chat.appendChild(node); scrollDown(); }
+
+  function typing(){
+    var t = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<i></i><i></i><i></i>';
+    chat.appendChild(t); scrollDown();
+    return t;
+  }
+
+  function toolCall(name, meta, cb){
+    var el = document.createElement('div');
+    el.className = 'toolcall';
+    el.innerHTML = '<div class="tc-row"><span class="tc-spin"></span><span class="tc-name">'+name+'</span><span style="color:#475569">consultando…</span></div>';
+    chat.appendChild(el); scrollDown();
+    setTimeout(function(){
+      el.innerHTML =
+        '<div class="tc-row"><span class="tc-check">✓</span><span class="tc-name">'+name+'</span><span style="color:#475569">· 200 OK</span></div>'+
+        '<div class="tc-meta">'+meta+'</div>';
+      scrollDown();
+      setTimeout(cb, 440);
+    }, 920);
+  }
+
+  /* ── CARD BUILDERS ── */
+  function saldoCard(){
+    var total = ACCOUNTS.reduce(function(s,a){return s+a.disponivel;},0);
+    var d = document.createElement('div');
+    d.className = 'rich';
+    var html = '<div class="rich-head"><div class="rh-label">Saldo · '+ACCOUNTS.length+' bancos conectados</div><div class="rh-acct">Open Finance · dados em tempo real</div></div>';
+    html += '<div class="bal-main">';
+    ACCOUNTS.forEach(function(a){
+      html += '<div class="bal-row"><span class="bal-k" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:'+a.color+';display:inline-block;"></span>'+a.bank+'</span><span class="bal-v" style="font-size:14px;">'+BRL(a.disponivel)+'</span></div>';
+    });
+    html += '<div class="bal-div"></div>';
+    html += '<div class="bal-row"><span class="bal-k"><strong>Total disponível</strong></span><span class="bal-v big">'+BRL(total)+'</span></div>';
+    html += '</div><div class="bal-div"></div><div class="bal-foot"><span class="lock">✦</span>consultar_saldo · Open Finance · todos os bancos</div>';
+    d.innerHTML = html;
+    return d;
+  }
+
+  function extratoCard(){
+    var d = document.createElement('div');
+    d.className = 'rich';
+    var html = '<div class="rich-head"><div class="rh-label">Extrato · últimos lançamentos</div><div class="rh-acct">Bradesco · Conta 56789-0</div></div><div class="stmt-list">';
+    EXTRATO.forEach(function(g){
+      html += '<div class="stmt-day">'+g.day+'</div>';
+      g.items.forEach(function(it){
+        var din = it.dir==='in';
+        html += '<div class="stmt-item">'+
+          '<div class="si-ic '+it.dir+'">'+it.ic+'</div>'+
+          '<div class="si-body"><div class="si-desc">'+it.desc+'</div><div class="si-cat">'+it.cat+'</div></div>'+
+          '<div class="si-val '+it.dir+'">'+(din?'+':'−')+BRL(Math.abs(it.val))+'</div>'+
+        '</div>';
+      });
+    });
+    html += '</div><div class="bal-foot"><span class="lock">✦</span>consultar_extrato · Open Finance · Bradesco</div>';
+    d.innerHTML = html;
+    return d;
+  }
+
+  function gastosCard(){
+    var d = document.createElement('div');
+    d.className = 'rich';
+    var html = '<div class="rich-head"><div class="rh-label">Gastos · mês atual · todos os bancos</div><div class="rh-acct">Total '+BRL(GASTO_TOTAL)+'</div></div><div class="spend">';
+    GASTOS.forEach(function(g){
+      html += '<div class="sp-row"><div class="sp-top"><span class="cat">'+g.cat+'</span><span class="val">'+BRL(g.val)+'</span></div>'+
+        '<div class="sp-track"><div class="sp-fill" style="width:'+g.pct+'%;background:'+g.color+'"></div></div></div>';
+    });
+    html += '</div><div class="bal-foot"><span class="lock">✦</span>consultar_gastos · agregado por categoria</div>';
+    d.innerHTML = html;
+    return d;
+  }
+
+  function pixCard(){
+    var d = document.createElement('div');
+    d.className = 'rich';
+    var html = '<div class="rich-head"><div class="rh-label">PIX · movimentações recentes</div><div class="rh-acct">Todos os bancos</div></div><div class="stmt-list">';
+    PIX.forEach(function(it){
+      var din = it.dir==='in';
+      html += '<div class="stmt-item">'+
+        '<div class="si-ic '+it.dir+'">'+it.ic+'</div>'+
+        '<div class="si-body"><div class="si-desc">'+it.desc+'</div><div class="si-cat">'+it.when+'</div></div>'+
+        '<div class="si-val '+it.dir+'">'+(din?'+':'−')+BRL(Math.abs(it.val))+'</div>'+
+      '</div>';
+    });
+    html += '</div><div class="bal-foot"><span class="lock">✦</span>consultar_extrato · filtro tipo=PIX</div>';
+    d.innerHTML = html;
+    return d;
+  }
+
+  function investCard(){
+    var d = document.createElement('div');
+    d.className = 'rich';
+    var html = '<div class="rich-head"><div class="rh-label">Investimentos · carteira total</div><div class="rh-acct">Total '+BRL(INV_TOTAL)+' · Open Finance</div></div><div class="inv-list">';
+    INVESTIMENTOS.forEach(function(i){
+      html += '<div class="inv-item">'+
+        '<div class="inv-ic">'+i.ic+'</div>'+
+        '<div class="inv-body"><div class="inv-name">'+i.name+'</div><div class="inv-type">'+i.type+'</div></div>'+
+        '<div class="inv-right"><div class="inv-val">'+BRL(i.val)+'</div><div class="inv-yield">'+i.yield+'</div></div>'+
+      '</div>';
+    });
+    html += '</div><div class="bal-foot"><span class="lock">✦</span>consultar_investimentos · Open Finance</div>';
+    d.innerHTML = html;
+    return d;
+  }
+
+  /* ── INTENT CLASSIFIER ── */
+  function classify(q){
+    var s = q.toLowerCase();
+    if(/(invest|aplica|carteira|cdb|tesouro|a[cç][aã]o|fundo|rendimento|yield)/.test(s)) return 'investimentos';
+    if(/(saldo|quanto.*(tenho|conta|dispon[ií]vel)|meu dinheiro|total.*banco)/.test(s)) return 'saldo';
+    if(/(gast(ei|o|os)|despesa|quanto.*(gast)|categoria|mais gast)/.test(s)) return 'gastos';
+    if(/\bpix\b/.test(s)) return 'pix';
+    if(/(extrato|movimenta|transa|[uú]ltim.*(lan[çc]|compra|gasto)|hist[oó]rico)/.test(s)) return 'extrato';
+    if(/(oi|ol[áa]|bom dia|boa tarde|ajuda|o que voc[êe]|pode|help)/.test(s)) return 'hello';
+    return 'fallback';
+  }
+
+  function respondSim(q){
+    var intent = classify(q);
+    var t = typing();
+
+    function go(ms, fn){ setTimeout(function(){ t.remove(); fn(); }, ms); }
+
+    if(intent==='saldo'){
+      go(920, function(){
+        addBotText('Vou consultar o saldo em todos os seus bancos via Open Finance 🔍');
+        toolCall('consultar_saldo','<span class="k">GET</span> /openfinance/v2/saldo · todos os bancos · 318ms',function(){
+          addRich(saldoCard());
+          addBotText('Você tem <b>'+BRL(TOTAL_SALDO)+'</b> disponíveis no total — somando Bradesco, Nubank e Inter. Quer ver o extrato de algum deles?');
+        });
+      });
+    }
+    else if(intent==='extrato'){
+      go(920, function(){
+        addBotText('Buscando seus últimos lançamentos 📄');
+        toolCall('consultar_extrato','<span class="k">GET</span> /openfinance/v2/extrato?dias=3 · Bradesco · 291ms',function(){
+          addRich(extratoCard());
+          addBotText('Nos últimos dias entraram <b>'+BRL(9400)+'</b> e saíram <b>'+BRL(1012.98)+'</b>. Quer ver os gastos agrupados por categoria?');
+        });
+      });
+    }
+    else if(intent==='gastos'){
+      go(920, function(){
+        addBotText('Somando seus gastos do mês em todos os bancos 📊');
+        toolCall('consultar_gastos','<span class="k">GET</span> /openfinance/v2/extrato?periodo=2026-08 · agregação · 344ms',function(){
+          addRich(gastosCard());
+          addBotText('Você gastou <b>'+BRL(GASTO_TOTAL)+'</b> neste mês. <b>Alimentação</b> liderou com R$ 1.842 — 38% do total. Quer dicas para economizar? 💡');
+        });
+      });
+    }
+    else if(intent==='pix'){
+      go(920, function(){
+        addBotText('Aqui estão seus PIX mais recentes ⚡');
+        toolCall('consultar_pix','<span class="k">GET</span> /openfinance/v2/extrato?tipo=PIX · todos os bancos · 271ms',function(){
+          addRich(pixCard());
+          addBotText('Foram <b>2 recebidos</b> (R$ 1.450) e <b>2 enviados</b> (R$ 534) recentemente. Quer fazer um novo PIX?');
+        });
+      });
+    }
+    else if(intent==='investimentos'){
+      go(920, function(){
+        addBotText('Buscando sua carteira de investimentos via Open Finance 📈');
+        toolCall('consultar_investimentos','<span class="k">GET</span> /openfinance/v2/investimentos · corretoras · 412ms',function(){
+          addRich(investCard());
+          addBotText('Sua carteira vale <b>'+BRL(INV_TOTAL)+'</b> no total. O Tesouro IPCA+ é o maior ativo. Quer uma análise de diversificação?');
+        });
+      });
+    }
+    else if(intent==='hello'){
+      go(780, function(){
+        addBotText('Oi, Rafael! 👋 Sou a <b>Fina</b>, sua assistente financeira inteligente. Tenho acesso a seus <b>3 bancos</b> via Open Finance e posso te ajudar com <b>saldo</b>, <b>extrato</b>, <b>gastos</b>, <b>PIX</b> e <b>investimentos</b>. Por onde começamos?');
+      });
+    }
+    else{
+      go(780, function(){
+        addBotText('Ainda estou aprendendo novas perguntas 🙂 Posso te ajudar com <b>saldo total</b>, <b>extrato</b>, <b>gastos por categoria</b>, <b>PIX</b> ou <b>investimentos</b>. Experimente um dos atalhos abaixo!');
+      });
+    }
+  }
+
+  /* ── MODO REAL ── */
+  var MODE = 'sim';
+  var history = [];
+
+  try{
+    fetch('/api/health').then(function(r){return r.ok?r.json():null;}).then(function(h){
+      if(h&&h.ready){
+        MODE='real';
+        var st = document.querySelector('.asst-status');
+        if(st) st.innerHTML='<span class="asst-dot"></span>Online · Claude conectado';
+      }
+    }).catch(function(){});
+  }catch(e){}
+
+  function toolCallAsync(name,meta){return new Promise(function(res){toolCall(name,meta||'',res);});}
+  function cardForStep(step){
+    switch(step.tool){
+      case 'consultar_saldo': return saldoCard();
+      case 'consultar_extrato': return extratoCard();
+      case 'consultar_gastos': return gastosCard();
+      case 'consultar_pix': return pixCard();
+      case 'consultar_investimentos': return investCard();
+      default: return null;
+    }
+  }
+
+  function respondReal(q){
+    var t = typing();
+    history.push({role:'user',content:q});
+    fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})})
+    .then(function(r){if(!r.ok)throw new Error('http '+r.status);return r.json();})
+    .then(function(data){
+      t.remove();
+      var chain = Promise.resolve();
+      (data.steps||[]).forEach(function(step){
+        chain = chain.then(function(){
+          return toolCallAsync(step.tool,step.meta).then(function(){
+            var card = cardForStep(step);
+            if(card) addRich(card);
+          });
+        });
+      });
+      chain.then(function(){
+        if(data.reply){addBotText(data.reply);history.push({role:'assistant',content:data.reply});}
+      });
+    })
+    .catch(function(){t.remove();history.pop();respondSim(q);});
+  }
+
+  function respond(q){ MODE==='real' ? respondReal(q) : respondSim(q); }
+
+  function submit(text){
+    text = (text||input.value).trim();
+    if(!text) return;
+    addUser(text);
+    input.value = '';
+    respond(text);
+  }
+
+  send.addEventListener('click',function(){submit();});
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){submit();}});
+  chips.addEventListener('click',function(e){
+    var c = e.target.closest('.chip');
+    if(c) submit(c.getAttribute('data-q'));
+  });
+
+  /* ── INTRO ── */
+  setTimeout(function(){
+    addBotText('Oi, Rafael! 👋 Sou a <b>Fina</b> — sua assistente financeira com IA. Conectei com seus <b>3 bancos</b> via Open Finance. Pergunte sobre <b>saldo</b>, <b>extrato</b>, <b>gastos</b> ou <b>investimentos</b> em linguagem natural. 🔐');
+  }, 520);
+})();
+</script>
+</body>
+</html>
