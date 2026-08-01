@@ -174,11 +174,11 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
       <div class="empty-title">Olá! Sou a Fina.</div>
       <div class="empty-sub">Sua assistente financeira com IA. Pergunte sobre saldo, extrato, gastos ou investimentos.</div>
       <div class="chips">
-        <div class="chip" onclick="sendChip(this)">Qual é meu saldo total?</div>
+        <div class="chip" onclick="sendChip(this)">Visão geral das minhas finanças</div>
+        <div class="chip" onclick="sendChip(this)">Qual é o meu saldo atual?</div>
         <div class="chip" onclick="sendChip(this)">Extrato dos últimos dias</div>
-        <div class="chip" onclick="sendChip(this)">Onde estou gastando mais?</div>
         <div class="chip" onclick="sendChip(this)">Meus investimentos</div>
-        <div class="chip" onclick="sendChip(this)">Histórico de PIX</div>
+        <div class="chip" onclick="sendChip(this)">Fatura do cartão de crédito</div>
       </div>
     </div>
 
@@ -254,6 +254,221 @@ function scrollBottom(){
 function fmt(n){
   return 'R$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
+function fmtAmt(o){ return o ? fmt(parseFloat(o.amount || 0)) : 'R$ 0,00'; }
+function fmtDate(s){ return s ? s.slice(0,10).split('-').reverse().join('/') : ''; }
+
+// Tool card titles (MCP Open Finance + legacy mock-bank)
+var CARD_TITLES = {
+  // MCP Open Finance
+  select_account:'🏦 Contas e saldos', of_list_accounts:'🏦 Contas',
+  of_get_account_balances:'💰 Saldo da conta', of_get_account_transactions:'📋 Extrato / Transações',
+  of_get_account_overdraft_limits:'📊 Limite cheque especial',
+  of_list_credit_cards:'💳 Cartões de crédito', of_get_credit_card_limits:'💳 Limites do cartão',
+  of_get_credit_card_bills:'📄 Faturas', of_get_credit_card_bill_transactions:'📋 Transações da fatura',
+  of_list_investments:'📈 Investimentos', of_list_loans:'🏛️ Empréstimos',
+  of_get_loan_contract:'🏛️ Contrato', of_get_loan_payments:'🏛️ Pagamentos',
+  of_list_financings:'🏠 Financiamentos', analytics_cross_pf_pj:'📊 Análise financeira PF × PJ',
+  of_get_consent:'✅ Consentimento', of_list_resources:'🔗 Recursos',
+  of_get_personal_identifications:'👤 Cadastro PF', of_get_business_identifications:'🏢 Cadastro PJ',
+  // Legacy mock-bank
+  get_saldo:'🏦 Saldo em conta', get_extrato:'📋 Extrato recente',
+  get_gastos_categoria:'📊 Gastos por categoria', get_pix:'⚡ Histórico PIX',
+  get_investimentos:'📈 Investimentos',
+  // Generic fallback
+  consultar_saldo:'🏦 Saldo', consultar_extrato:'📋 Extrato',
+  consultar_gastos:'📊 Gastos', consultar_pix:'⚡ PIX', consultar_fatura:'💳 Fatura',
+};
+
+function addRow(parent, label, value, cls){
+  var row = document.createElement('div');
+  row.className = 'tool-row';
+  row.innerHTML = '<span class="tool-label">' + label + '</span>'
+    + '<span class="tool-value ' + (cls||'') + '">' + value + '</span>';
+  parent.appendChild(row);
+}
+
+// ── Open Finance renderers ──
+function renderSelectAccount(body, accounts){
+  var total = 0;
+  (accounts||[]).forEach(function(a){
+    var v = parseFloat((a.saldo_disponivel||{}).amount||0); total += v;
+    addRow(body, (a.rotulo||a.tipo||'Conta') + (a.titular ? ' · '+a.titular : ''), fmt(v), 'green');
+  });
+  if ((accounts||[]).length > 1){
+    var tot = document.createElement('div'); tot.className='tool-total';
+    tot.innerHTML='<span>Total disponível</span><span class="val">'+fmt(total)+'</span>';
+    body.appendChild(tot);
+  }
+}
+
+function renderBalance(body, d){
+  if(!d) return;
+  var av = parseFloat((d.availableAmount||{}).amount||0);
+  var bl = parseFloat((d.blockedAmount||{}).amount||0);
+  var ai = parseFloat((d.automaticallyInvestedAmount||{}).amount||0);
+  addRow(body,'Disponível', fmt(av), 'green');
+  if(bl>0) addRow(body,'Bloqueado', fmt(bl), 'red');
+  if(ai>0) addRow(body,'Investido autom.', fmt(ai), 'green');
+}
+
+function renderTransactions(body, txs){
+  (txs||[]).slice(0,10).forEach(function(t){
+    var isC = t.creditDebitType==='CREDITO';
+    var v = parseFloat((t.transactionAmount||t.amount||{}).amount||0);
+    var name = t.transactionName||t.creditorName||t.debtorName||'';
+    var date = fmtDate(t.transactionDateTime||t.bookingDate||'');
+    addRow(body, (date?date+' · ':'')+name, (isC?'+':'-')+fmt(v), isC?'green':'red');
+  });
+}
+
+function renderAccountList(body, accs){
+  var LABELS = {CONTA_DEPOSITO_A_VISTA:'Conta Corrente',CONTA_POUPANCA:'Poupança',CONTA_PAGAMENTO:'Conta Pagamento'};
+  (accs||[]).forEach(function(a){
+    var label = (LABELS[a.type]||a.type||'Conta') + (a.ownerType==='PESSOA_JURIDICA'?' (PJ)':' (PF)');
+    addRow(body, label, '···'+(a.number||a.accountId||''), '');
+  });
+}
+
+function renderInvestments(body, items){
+  var total = 0;
+  (items||[]).forEach(function(inv){
+    var v = parseFloat((inv.updatedValue||inv.grossAmount||{}).amount||0); total += v;
+    var name = inv.investmentType||inv.name||inv.ticker||inv.anbimaCategory||'Investimento';
+    var due = inv.dueDate ? ' · venc '+fmtDate(inv.dueDate) : '';
+    addRow(body, name+due, fmt(v), 'green');
+  });
+  if((items||[]).length>1){
+    var tot=document.createElement('div'); tot.className='tool-total';
+    tot.innerHTML='<span>Total</span><span class="val">'+fmt(total)+'</span>';
+    body.appendChild(tot);
+  }
+}
+
+function renderBills(body, bills){
+  (bills||[]).slice(0,5).forEach(function(b){
+    var due = fmtDate(b.dueDate||'');
+    var v = parseFloat((b.billTotalAmount||b.billMinimumAmount||{}).amount||0);
+    addRow(body, 'Venc. '+due+(b.isInstalment?' (parc.)':''), fmt(v), 'red');
+  });
+}
+
+function renderCards(body, cards){
+  (cards||[]).forEach(function(c){
+    addRow(body, c.name||c.productType||'Cartão', c.creditCardAccountId||'', '');
+  });
+}
+
+function renderAnalytics(body, d){
+  var c = d.consolidado||{};
+  if(c.saldo_disponivel_total!=null) addRow(body,'Saldo total disponível', fmt(c.saldo_disponivel_total), 'green');
+  if(c.divida_total!=null&&c.divida_total>0) addRow(body,'Dívida total', fmt(c.divida_total), 'red');
+  if(c.patrimonio_liquido_aprox!=null){
+    var v=c.patrimonio_liquido_aprox;
+    addRow(body,'Patrimônio líquido aprox.', fmt(v), v>=0?'green':'red');
+  }
+  ['PF','PJ'].forEach(function(ent){
+    var e=(d.entidades||{})[ent]; if(!e) return;
+    var sep=document.createElement('div');
+    sep.style.cssText='padding:8px 0 4px;border-top:1px solid var(--b2);margin-top:8px;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.3px;';
+    sep.textContent=ent+' — '+(e.titular||'');
+    body.appendChild(sep);
+    if(e.entradas_12m!=null) addRow(body,'Entradas 12m', fmt(e.entradas_12m), 'green');
+    if(e.saidas_12m!=null)   addRow(body,'Saídas 12m',   fmt(e.saidas_12m),   'red');
+    if(e.fluxo_liquido_12m!=null){
+      var fl=e.fluxo_liquido_12m;
+      addRow(body,'Fluxo líquido 12m', fmt(fl), fl>=0?'green':'red');
+    }
+    if(e.fatura_cartao_atual&&e.fatura_cartao_atual>0) addRow(body,'Fatura atual', fmt(e.fatura_cartao_atual), 'red');
+    if(e.divida_total&&e.divida_total>0) addRow(body,'Dívida', fmt(e.divida_total), 'red');
+  });
+  var cx=d.cruzamentos;
+  if(cx&&cx.prolabore_medio_mensal!=null){
+    var sep2=document.createElement('div');
+    sep2.style.cssText='padding:8px 0 4px;border-top:1px solid var(--b2);margin-top:8px;font-size:11.5px;font-weight:700;color:var(--muted);';
+    sep2.textContent='Cruzamentos PF × PJ';
+    body.appendChild(sep2);
+    addRow(body,'Pró-labore médio mensal', fmt(cx.prolabore_medio_mensal), '');
+  }
+  if(d.sugestao_pj){
+    var tip=document.createElement('div');
+    tip.style.cssText='font-size:12px;color:var(--fina-l);background:var(--fina-g);border:1px solid rgba(124,58,237,.15);border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.6;';
+    tip.textContent='💡 '+d.sugestao_pj;
+    body.appendChild(tip);
+  }
+}
+
+function renderGeneric(body, d){
+  if(!d){ body.textContent='Sem dados.'; return; }
+  var SKIP=new Set(['links','meta','requestDateTime','_meta']);
+  var entries=Object.entries(d).filter(function(e){ return !SKIP.has(e[0])&&e[1]!=null&&typeof e[1]!=='object'; });
+  entries.slice(0,8).forEach(function(e){ addRow(body, e[0], String(e[1]), ''); });
+  if(!entries.length){
+    var pre=document.createElement('div');
+    pre.style.cssText='font-size:11.5px;color:var(--muted);white-space:pre-wrap;overflow:auto;max-height:160px;';
+    pre.textContent=JSON.stringify(d,null,2).slice(0,600);
+    body.appendChild(pre);
+  }
+}
+
+// ── Dispatcher principal ──
+function renderCardBody(body, tool, d){
+  // 1. select_account (extensão)
+  if(tool==='select_account'&&d&&d.accounts){ renderSelectAccount(body,d.accounts); return; }
+  // 2. analytics (extensão)
+  if(tool==='analytics_cross_pf_pj'&&d&&d.entidades){ renderAnalytics(body,d); return; }
+  // 3. Open Finance envelope { data, links, meta }
+  if(d&&d.data!==undefined&&d.links!==undefined){
+    var inner=d.data;
+    if(Array.isArray(inner)){
+      if(tool==='of_get_account_transactions'||tool==='of_get_credit_card_bill_transactions') renderTransactions(body,inner);
+      else if(tool==='of_list_accounts') renderAccountList(body,inner);
+      else if(tool==='of_list_investments') renderInvestments(body,inner);
+      else if(tool==='of_list_credit_cards') renderCards(body,inner);
+      else if(tool==='of_get_credit_card_bills') renderBills(body,inner);
+      else {
+        inner.slice(0,6).forEach(function(item){
+          var pre=document.createElement('div');
+          pre.style.cssText='font-size:12px;color:var(--muted);border-bottom:1px solid var(--b2);padding:5px 0;';
+          pre.textContent=JSON.stringify(item).slice(0,120);
+          body.appendChild(pre);
+        });
+      }
+    } else {
+      if(tool==='of_get_account_balances') renderBalance(body,inner);
+      else renderGeneric(body,inner);
+    }
+    if(d.meta&&d.meta.totalRecords>0){
+      var note=document.createElement('div');
+      note.style.cssText='font-size:11px;color:var(--muted);margin-top:8px;text-align:right;';
+      note.textContent=d.meta.totalRecords+' registro(s)';
+      body.appendChild(note);
+    }
+    return;
+  }
+  // 4. Legacy mock-bank
+  if(tool==='get_saldo'&&d&&d.contas){
+    (d.contas||[]).forEach(function(c){ addRow(body,c.banco,fmt(c.saldo),'green'); });
+    if(d.total){ var tot=document.createElement('div');tot.className='tool-total';tot.innerHTML='<span>Total</span><span class="val">'+fmt(d.total)+'</span>';body.appendChild(tot); }
+    return;
+  }
+  if((tool==='get_extrato'||tool==='get_pix')&&Array.isArray(d)){
+    d.slice(0,8).forEach(function(t){
+      var isC=t.valor>0;
+      addRow(body,(t.data?t.data+' · ':'')+t.descricao,(isC?'+':'')+fmt(Math.abs(t.valor)),isC?'green':'red');
+    });
+    return;
+  }
+  if(tool==='get_gastos_categoria'&&d&&d.categorias){
+    (d.categorias||[]).forEach(function(c){ addRow(body,c.categoria||c.nome,fmt(c.total||c.valor),'red'); }); return;
+  }
+  if(tool==='get_investimentos'&&d&&d.ativos){
+    (d.ativos||[]).forEach(function(a){ addRow(body,a.nome,fmt(a.valor),'green'); });
+    if(d.total){ var tot2=document.createElement('div');tot2.className='tool-total';tot2.innerHTML='<span>Total investido</span><span class="val">'+fmt(d.total)+'</span>';body.appendChild(tot2); }
+    return;
+  }
+  // 5. Genérico
+  renderGeneric(body,d);
+}
 
 function appendMsg(role, text){
   showChat();
@@ -307,75 +522,14 @@ function renderCard(step){
   var card = document.createElement('div');
   card.className = 'tool-card';
 
-  var titles = {
-    get_saldo: '🏦 Saldo em conta',
-    get_extrato: '📋 Extrato recente',
-    get_gastos_categoria: '📊 Gastos por categoria',
-    get_pix: '⚡ Histórico PIX',
-    get_investimentos: '📈 Investimentos'
-  };
-
   var head = document.createElement('div');
   head.className = 'tool-card-head';
-  head.textContent = titles[step.tool] || step.tool;
+  head.textContent = CARD_TITLES[step.tool] || step.tool;
   card.appendChild(head);
 
   var body = document.createElement('div');
   body.className = 'tool-card-body';
-
-  var d = step.data;
-
-  if(step.tool === 'get_saldo' && d.contas){
-    d.contas.forEach(function(c){
-      var row = document.createElement('div');
-      row.className = 'tool-row';
-      row.innerHTML = '<span class="tool-label">' + c.banco + '</span><span class="tool-value green">' + fmt(c.saldo) + '</span>';
-      body.appendChild(row);
-    });
-    var tot = document.createElement('div');
-    tot.className = 'tool-total';
-    tot.innerHTML = '<span>Total</span><span class="val">' + fmt(d.total || 0) + '</span>';
-    body.appendChild(tot);
-  } else if((step.tool === 'get_extrato' || step.tool === 'get_pix') && Array.isArray(d)){
-    d.slice(0,8).forEach(function(t){
-      var row = document.createElement('div');
-      row.className = 'tool-row';
-      var val = t.valor || t.amount || 0;
-      var isCredit = val > 0;
-      var label = t.descricao || t.description || t.nome || '';
-      var date = t.data || t.date || '';
-      row.innerHTML = '<span class="tool-label">' + (date ? date + ' · ' : '') + label + '</span>'
-        + '<span class="tool-value ' + (isCredit ? 'green' : 'red') + '">'
-        + (isCredit ? '+' : '') + fmt(Math.abs(val)) + '</span>';
-      body.appendChild(row);
-    });
-  } else if(step.tool === 'get_gastos_categoria' && d.categorias){
-    d.categorias.forEach(function(c){
-      var row = document.createElement('div');
-      row.className = 'tool-row';
-      row.innerHTML = '<span class="tool-label">' + (c.categoria || c.nome) + '</span><span class="tool-value red">' + fmt(c.total || c.valor) + '</span>';
-      body.appendChild(row);
-    });
-  } else if(step.tool === 'get_investimentos' && d.ativos){
-    d.ativos.forEach(function(a){
-      var row = document.createElement('div');
-      row.className = 'tool-row';
-      row.innerHTML = '<span class="tool-label">' + a.nome + '</span><span class="tool-value green">' + fmt(a.valor) + '</span>';
-      body.appendChild(row);
-    });
-    if(d.total){
-      var tot = document.createElement('div');
-      tot.className = 'tool-total';
-      tot.innerHTML = '<span>Total investido</span><span class="val">' + fmt(d.total) + '</span>';
-      body.appendChild(tot);
-    }
-  } else {
-    var pre = document.createElement('div');
-    pre.style.cssText = 'font-size:12px;font-family:monospace;color:var(--muted);white-space:pre-wrap;word-break:break-all;';
-    pre.textContent = JSON.stringify(d, null, 2);
-    body.appendChild(pre);
-  }
-
+  renderCardBody(body, step.tool, step.data);
   card.appendChild(body);
   return card;
 }
