@@ -836,7 +836,7 @@ function simReply(text){
       {data:'18/07',descricao:'Uber',valor:-47.20},
     ]});
     reply = 'Aqui estão suas últimas movimentações. Nota: entrada de salário em 22/07. Quer filtrar por categoria?';
-  } else if(/(gasto|categoria|onde|gastando|despesa)/i.test(s)){
+  } else if(/(gasto|categoria|onde|gastando|despesa|gr[aá]fico|chart|pizza|visual)/i.test(s)){
     steps.push({tool:'get_gastos_categoria', data:{categorias:[
       {categoria:'Alimentação',total:541.30},
       {categoria:'Transporte',total:187.60},
