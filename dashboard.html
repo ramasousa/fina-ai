@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Fina.ai</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#06070f;--s1:#0c0e1c;--s2:#12152a;--s3:#181c34;
+  --b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.04);
+  --fina:#7c3aed;--fina-d:#6d28d9;--fina-l:#a78bfa;--fina-g:rgba(124,58,237,.12);
+  --money:#10b981;--money-l:#34d399;--money-g:rgba(16,185,129,.1);
+  --neg:#ef4444;
+  --text:#f1f5f9;--muted:#64748b;--muted2:#1e2a3a;
+  --nav-h:58px;
+  --side-w:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TOP NAV ── */
+.topnav{height:var(--nav-h);background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:10;}
+.topnav-brand{display:flex;align-items:center;gap:10px;}
+.topnav-logo{width:32px;height:32px;background:var(--fina);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;}
+.topnav-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+.topnav-name em{color:var(--fina-l);font-style:normal;}
+.topnav-right{display:flex;align-items:center;gap:16px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:6px 14px;font-size:13px;}
+.user-avatar{width:26px;height:26px;border-radius:8px;background:var(--fina-g);border:1px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--fina-l);}
+.user-name{font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.logout-btn{background:none;border:1px solid var(--b1);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+.logout-btn:hover{border-color:var(--neg);color:#fca5a5;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;min-height:0;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--side-w);background:var(--s1);border-right:1px solid var(--b1);padding:20px 12px;display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-section{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:0 12px;margin-bottom:8px;margin-top:20px;}
+.sidebar-section:first-child{margin-top:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--muted);user-select:none;position:relative;}
+.nav-item.active{background:var(--fina-g);color:var(--fina-l);border:1px solid rgba(124,58,237,.2);}
+.nav-item:not(.active):not(.disabled):hover{background:var(--b2);color:var(--text);}
+.nav-item.disabled{opacity:.45;cursor:default;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;}
+.badge{font-size:9.5px;font-weight:700;background:rgba(100,116,139,.15);border:1px solid var(--b1);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:auto;letter-spacing:.3px;}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--b1);}
+.sidebar-footer-text{font-size:11.5px;color:var(--muted);padding:0 12px;line-height:1.6;}
+.sidebar-footer-text a{color:var(--fina-l);text-decoration:none;}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+
+/* ── CHAT AREA ── */
+.chat-wrap{flex:1;overflow-y:auto;padding:28px 0;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;}
+.chat-wrap::-webkit-scrollbar{width:4px;}
+.chat-wrap::-webkit-scrollbar-track{background:transparent;}
+.chat-wrap::-webkit-scrollbar-thumb{background:var(--b1);border-radius:4px;}
+.chat-inner{width:100%;max-width:740px;margin:0 auto;padding:0 24px;}
+
+/* Empty state */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.empty-icon{width:56px;height:56px;background:var(--fina-g);border:1px solid rgba(124,58,237,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px;}
+.empty-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;}
+.empty-sub{font-size:14px;color:var(--muted);max-width:380px;line-height:1.6;margin-bottom:28px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.chip{background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:rgba(124,58,237,.4);color:var(--fina-l);background:var(--fina-g);}
+
+/* Messages */
+.msg-row{display:flex;gap:12px;max-width:740px;margin:0 auto;width:100%;padding:0 24px;}
+.msg-row.user{flex-direction:row-reverse;}
+.msg-avatar{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-top:2px;}
+.msg-avatar.ai{background:var(--fina-g);border:1px solid rgba(124,58,237,.25);color:var(--fina-l);}
+.msg-avatar.user{background:var(--s3);border:1px solid var(--b1);color:var(--muted);}
+.msg-bubble{max-width:80%;background:var(--s2);border:1px solid var(--b1);border-radius:16px;padding:12px 16px;font-size:14px;line-height:1.7;}
+.msg-row.user .msg-bubble{background:var(--fina-g);border-color:rgba(124,58,237,.2);color:var(--text);}
+
+/* Tool cards */
+.tool-card{background:var(--s3);border:1px solid var(--b1);border-radius:14px;margin:6px 0;overflow:hidden;}
+.tool-card-head{padding:10px 14px;font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.3px;border-bottom:1px solid var(--b2);display:flex;align-items:center;gap:6px;}
+.tool-card-body{padding:14px;}
+.tool-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b2);font-size:13px;}
+.tool-row:last-child{border-bottom:none;padding-bottom:0;}
+.tool-label{color:var(--muted);}
+.tool-value{font-weight:600;font-family:'DM Mono',monospace;}
+.tool-value.green{color:var(--money-l);}
+.tool-value.red{color:#fca5a5;}
+.tool-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);font-size:14px;font-weight:700;}
+.tool-total .val{color:var(--money-l);font-family:'DM Mono',monospace;}
+
+/* Typing indicator */
+.typing{display:flex;align-items:center;gap:5px;padding:14px 16px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+
+/* ── INPUT BAR ── */
+.input-bar{border-top:1px solid var(--b1);padding:16px 24px;background:var(--s1);flex-shrink:0;}
+.input-inner{max-width:740px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;}
+.input-box{flex:1;background:var(--s2);border:1.5px solid var(--b1);border-radius:14px;padding:12px 16px;font-size:14px;font-family:inherit;color:var(--text);resize:none;outline:none;max-height:140px;min-height:48px;line-height:1.5;transition:border-color .15s;}
+.input-box:focus{border-color:var(--fina);}
+.input-box::placeholder{color:var(--muted);}
+.send-btn{width:44px;height:44px;border-radius:12px;background:var(--fina);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:all .2s;flex-shrink:0;}
+.send-btn:hover{background:var(--fina-d);}
+.send-btn:disabled{background:var(--s3);color:var(--muted);cursor:default;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .user-name{display:none;}
+  .msg-row{padding:0 16px;}
+  .msg-row.user{padding:0 16px;}
+  .chat-inner{padding:0 16px;}
+  .input-bar{padding:12px 16px;}
+}
+
+/* Error banner */
+.err-banner{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;border-radius:10px;padding:10px 14px;font-size:13px;margin:8px 24px;max-width:740px;margin:8px auto;width:calc(100% - 48px);}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo">✦</div>
+    <div class="topnav-name">fina<em>.ai</em></div>
+  </div>
+  <div class="topnav-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="uavatar">F</div>
+      <span class="user-name" id="uname">Usuário</span>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Sair</button>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu</div>
+    <div class="nav-item active">
+      <span class="icon">💬</span> Chat
+    </div>
+    <div class="nav-item disabled">
+      <span class="icon">🏦</span> Bancos <span class="badge">EM BREVE</span>
+    </div>
+    <div class="nav-item disabled">
+      <span class="icon">📊</span> Relatórios <span class="badge">EM BREVE</span>
+    </div>
+    <div class="nav-item disabled">
+      <span class="icon">🎯</span> Metas <span class="badge">EM BREVE</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">
+        Demo com dados fictícios.<br>
+        <a href="index.html">← Voltar ao site</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+
+    <!-- empty state shown initially -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">✦</div>
+      <div class="empty-title">Olá! Sou a Fina.</div>
+      <div class="empty-sub">Sua assistente financeira com IA. Pergunte sobre saldo, extrato, gastos ou investimentos.</div>
+      <div class="chips">
+        <div class="chip" onclick="sendChip(this)">Qual é meu saldo total?</div>
+        <div class="chip" onclick="sendChip(this)">Extrato dos últimos dias</div>
+        <div class="chip" onclick="sendChip(this)">Onde estou gastando mais?</div>
+        <div class="chip" onclick="sendChip(this)">Meus investimentos</div>
+        <div class="chip" onclick="sendChip(this)">Histórico de PIX</div>
+      </div>
+    </div>
+
+    <!-- chat scroll area (hidden initially) -->
+    <div class="chat-wrap" id="chatWrap" style="display:none;"></div>
+
+  </main>
+</div>
+
+<!-- INPUT BAR -->
+<div class="input-bar">
+  <div class="input-inner">
+    <textarea class="input-box" id="inputBox" placeholder="Pergunte sobre seu dinheiro…" rows="1"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+// ── AUTH GUARD ──
+var session = null;
+try { session = JSON.parse(sessionStorage.getItem('fina_session')); } catch(e){}
+if(!session || !session.email){ location.href = 'login.html'; }
+
+// ── POPULATE UI ──
+var nameStr = (session && session.name) ? session.name : 'Usuário';
+document.getElementById('uname').textContent = nameStr;
+document.getElementById('uavatar').textContent = nameStr.charAt(0).toUpperCase();
+
+document.getElementById('logoutBtn').addEventListener('click', function(){
+  sessionStorage.removeItem('fina_session');
+  location.href = 'login.html';
+});
+
+// ── CHAT STATE ──
+var messages = [];  // [{role, content}] accumulated for /api/chat
+var isTyping = false;
+var MODE = 'sim';   // 'real' or 'sim'
+
+// Check server availability
+fetch('/api/health').then(function(r){ return r.json(); }).then(function(d){
+  MODE = d.ready ? 'real' : 'sim';
+}).catch(function(){ MODE = 'sim'; });
+
+// ── CHIP SHORTCUT ──
+function sendChip(el){
+  document.getElementById('inputBox').value = el.textContent;
+  sendMsg();
+}
+
+// ── AUTO-RESIZE TEXTAREA ──
+var box = document.getElementById('inputBox');
+box.addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+});
+box.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
+});
+
+// ── RENDER HELPERS ──
+function showChat(){
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('chatWrap').style.display = 'flex';
+  document.getElementById('chatWrap').style.flexDirection = 'column';
+  document.getElementById('chatWrap').style.gap = '8px';
+}
+
+function scrollBottom(){
+  var cw = document.getElementById('chatWrap');
+  cw.scrollTop = cw.scrollHeight;
+}
+
+function fmt(n){
+  return 'R$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function appendMsg(role, text){
+  showChat();
+  var cw = document.getElementById('chatWrap');
+
+  var row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+
+  var avatar = document.createElement('div');
+  avatar.className = 'msg-avatar ' + (role === 'user' ? 'user' : 'ai');
+  avatar.textContent = role === 'user' ? nameStr.charAt(0).toUpperCase() : '✦';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  cw.appendChild(row);
+  scrollBottom();
+  return bubble;
+}
+
+function appendTyping(){
+  showChat();
+  var cw = document.getElementById('chatWrap');
+  var row = document.createElement('div');
+  row.className = 'msg-row assistant';
+  row.id = 'typingRow';
+
+  var avatar = document.createElement('div');
+  avatar.className = 'msg-avatar ai';
+  avatar.textContent = '✦';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble typing';
+  bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  cw.appendChild(row);
+  scrollBottom();
+}
+
+function removeTyping(){
+  var t = document.getElementById('typingRow');
+  if(t) t.remove();
+}
+
+function renderCard(step){
+  var card = document.createElement('div');
+  card.className = 'tool-card';
+
+  var titles = {
+    get_saldo: '🏦 Saldo em conta',
+    get_extrato: '📋 Extrato recente',
+    get_gastos_categoria: '📊 Gastos por categoria',
+    get_pix: '⚡ Histórico PIX',
+    get_investimentos: '📈 Investimentos'
+  };
+
+  var head = document.createElement('div');
+  head.className = 'tool-card-head';
+  head.textContent = titles[step.tool] || step.tool;
+  card.appendChild(head);
+
+  var body = document.createElement('div');
+  body.className = 'tool-card-body';
+
+  var d = step.data;
+
+  if(step.tool === 'get_saldo' && d.contas){
+    d.contas.forEach(function(c){
+      var row = document.createElement('div');
+      row.className = 'tool-row';
+      row.innerHTML = '<span class="tool-label">' + c.banco + '</span><span class="tool-value green">' + fmt(c.saldo) + '</span>';
+      body.appendChild(row);
+    });
+    var tot = document.createElement('div');
+    tot.className = 'tool-total';
+    tot.innerHTML = '<span>Total</span><span class="val">' + fmt(d.total || 0) + '</span>';
+    body.appendChild(tot);
+  } else if((step.tool === 'get_extrato' || step.tool === 'get_pix') && Array.isArray(d)){
+    d.slice(0,8).forEach(function(t){
+      var row = document.createElement('div');
+      row.className = 'tool-row';
+      var val = t.valor || t.amount || 0;
+      var isCredit = val > 0;
+      var label = t.descricao || t.description || t.nome || '';
+      var date = t.data || t.date || '';
+      row.innerHTML = '<span class="tool-label">' + (date ? date + ' · ' : '') + label + '</span>'
+        + '<span class="tool-value ' + (isCredit ? 'green' : 'red') + '">'
+        + (isCredit ? '+' : '') + fmt(Math.abs(val)) + '</span>';
+      body.appendChild(row);
+    });
+  } else if(step.tool === 'get_gastos_categoria' && d.categorias){
+    d.categorias.forEach(function(c){
+      var row = document.createElement('div');
+      row.className = 'tool-row';
+      row.innerHTML = '<span class="tool-label">' + (c.categoria || c.nome) + '</span><span class="tool-value red">' + fmt(c.total || c.valor) + '</span>';
+      body.appendChild(row);
+    });
+  } else if(step.tool === 'get_investimentos' && d.ativos){
+    d.ativos.forEach(function(a){
+      var row = document.createElement('div');
+      row.className = 'tool-row';
+      row.innerHTML = '<span class="tool-label">' + a.nome + '</span><span class="tool-value green">' + fmt(a.valor) + '</span>';
+      body.appendChild(row);
+    });
+    if(d.total){
+      var tot = document.createElement('div');
+      tot.className = 'tool-total';
+      tot.innerHTML = '<span>Total investido</span><span class="val">' + fmt(d.total) + '</span>';
+      body.appendChild(tot);
+    }
+  } else {
+    var pre = document.createElement('div');
+    pre.style.cssText = 'font-size:12px;font-family:monospace;color:var(--muted);white-space:pre-wrap;word-break:break-all;';
+    pre.textContent = JSON.stringify(d, null, 2);
+    body.appendChild(pre);
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+function insertCards(steps){
+  var cw = document.getElementById('chatWrap');
+  steps.forEach(function(step){
+    cw.appendChild(renderCard(step));
+  });
+  scrollBottom();
+}
+
+// ── SIMULATED MODE ──
+var SIM_ACCOUNTS = [
+  {banco:'Bradesco', saldo:8427.63},
+  {banco:'Nubank',   saldo:2340.00},
+  {banco:'Inter',    saldo:1893.21}
+];
+var SIM_TOTAL = SIM_ACCOUNTS.reduce(function(s,a){return s+a.saldo;},0);
+
+function simReply(text){
+  var s = text.toLowerCase();
+  var steps = [];
+  var reply = '';
+
+  if(/(saldo|quanto tenho|total|dinheiro)/i.test(s)){
+    steps.push({tool:'get_saldo', data:{contas:SIM_ACCOUNTS, total:SIM_TOTAL}});
+    reply = 'Seu saldo total é ' + fmt(SIM_TOTAL) + ' distribuído em 3 contas. Quer ver o extrato de alguma delas?';
+  } else if(/(extrato|movimenta|últim)/i.test(s)){
+    steps.push({tool:'get_extrato', data:[
+      {data:'23/07',descricao:'iFood',valor:-89.50},
+      {data:'22/07',descricao:'Salário',valor:6500.00},
+      {data:'22/07',descricao:'Nubank fatura',valor:-1230.00},
+      {data:'20/07',descricao:'Supermercado Pão de Açúcar',valor:-312.80},
+      {data:'18/07',descricao:'Uber',valor:-47.20},
+    ]});
+    reply = 'Aqui estão suas últimas movimentações. Nota: entrada de salário em 22/07. Quer filtrar por categoria?';
+  } else if(/(gasto|categoria|onde|gastando|despesa)/i.test(s)){
+    steps.push({tool:'get_gastos_categoria', data:{categorias:[
+      {categoria:'Alimentação',total:541.30},
+      {categoria:'Transporte',total:187.60},
+      {categoria:'Moradia',total:1200.00},
+      {categoria:'Lazer',total:320.00},
+      {categoria:'Saúde',total:95.00},
+    ]}});
+    reply = 'Seu maior gasto este mês é com Moradia (R$ 1.200). Quer analisar alguma categoria em detalhe?';
+  } else if(/(pix|transferência|transferencia)/i.test(s)){
+    steps.push({tool:'get_pix', data:[
+      {data:'21/07',descricao:'PIX enviado — João Silva',valor:-200.00},
+      {data:'19/07',descricao:'PIX recebido — Maria',valor:150.00},
+      {data:'15/07',descricao:'PIX enviado — Aluguel',valor:-1200.00},
+    ]});
+    reply = 'Você realizou 3 PIX recentemente. Quer ver o histórico completo?';
+  } else if(/(invest|aplica|carteira|cdb|tesouro|fundo|ação|acoes)/i.test(s)){
+    steps.push({tool:'get_investimentos', data:{
+      ativos:[
+        {nome:'Tesouro Selic 2027',valor:14350.00},
+        {nome:'CDB 110% CDI',valor:8200.00},
+        {nome:'Fundo Multimercado',valor:5100.00},
+        {nome:'Ações ITUB4',valor:3840.00},
+      ],
+      total: 31490.00
+    }});
+    reply = 'Sua carteira está em R$ 31.490,00. Tesouro Selic é sua maior posição. Quer detalhes de algum ativo?';
+  } else {
+    reply = 'Posso te ajudar com saldo, extrato, gastos por categoria, PIX ou investimentos. O que você quer consultar?';
+  }
+
+  return {reply, steps};
+}
+
+// ── SEND MESSAGE ──
+function sendMsg(){
+  if(isTyping) return;
+  var text = box.value.trim();
+  if(!text) return;
+
+  box.value = '';
+  box.style.height = 'auto';
+
+  appendMsg('user', text);
+  messages.push({role:'user', content:text});
+
+  isTyping = true;
+  document.getElementById('sendBtn').disabled = true;
+  appendTyping();
+
+  if(MODE === 'real'){
+    fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({messages: messages})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      removeTyping();
+      if(d.steps && d.steps.length){ insertCards(d.steps); }
+      var replyText = d.reply || d.message || 'Desculpe, não entendi.';
+      appendMsg('assistant', replyText);
+      messages.push({role:'assistant', content:replyText});
+    })
+    .catch(function(err){
+      removeTyping();
+      appendMsg('assistant', 'Erro ao conectar com o servidor. Tente novamente.');
+    })
+    .finally(function(){
+      isTyping = false;
+      document.getElementById('sendBtn').disabled = false;
+    });
+  } else {
+    // Simulated mode
+    setTimeout(function(){
+      removeTyping();
+      var res = simReply(text);
+      if(res.steps.length){ insertCards(res.steps); }
+      appendMsg('assistant', res.reply);
+      messages.push({role:'assistant', content:res.reply});
+      isTyping = false;
+      document.getElementById('sendBtn').disabled = false;
+    }, 700 + Math.random()*400);
+  }
+}
+</script>
+</body>
+</html>

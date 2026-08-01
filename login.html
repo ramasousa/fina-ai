@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar · Fina.ai</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#06070f;--s1:#0c0e1c;--s2:#12152a;
+  --b1:rgba(255,255,255,.08);
+  --fina:#7c3aed;--fina-d:#6d28d9;--fina-l:#a78bfa;
+  --text:#f1f5f9;--muted:#64748b;--neg:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;}
+.glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(circle,rgba(124,58,237,.14) 0%,transparent 65%);pointer-events:none;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;text-decoration:none;color:var(--text);}
+.logo-mark{width:36px;height:36px;background:var(--fina);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:900;}
+.logo-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;}
+.logo-name em{color:var(--fina-l);font-style:normal;}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:36px;width:100%;max-width:420px;}
+.card-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.card-sub{font-size:13.5px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:7px;letter-spacing:.3px;}
+.field input{width:100%;background:var(--s2);border:1.5px solid var(--b1);border-radius:11px;padding:13px 16px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s;}
+.field input:focus{border-color:var(--fina);}
+.field input.err{border-color:var(--neg);}
+.field input::placeholder{color:var(--muted);}
+.submit{width:100%;background:var(--fina);color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:4px;}
+.submit:hover{background:var(--fina-d);}
+.submit:active{transform:scale(.98);}
+.msg{font-size:12.5px;padding:10px 14px;border-radius:9px;margin-bottom:16px;display:none;}
+.msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;display:block;}
+.alt{text-align:center;margin-top:22px;font-size:13.5px;color:var(--muted);}
+.alt a{color:var(--fina-l);font-weight:600;text-decoration:none;}
+.alt a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<a class="logo" href="index.html">
+  <div class="logo-mark">✦</div>
+  <div class="logo-name">fina<em>.ai</em></div>
+</a>
+
+<div class="card">
+  <div class="card-title">Bem-vindo de volta</div>
+  <div class="card-sub">Entre com a sua conta para continuar.</div>
+
+  <div class="msg" id="msg"></div>
+
+  <form id="form" autocomplete="off">
+    <div class="field">
+      <label>E-mail</label>
+      <input id="email" type="email" placeholder="voce@email.com" autocomplete="email" required>
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input id="pwd" type="password" placeholder="Sua senha" autocomplete="current-password" required>
+    </div>
+    <button class="submit" type="submit">Entrar →</button>
+  </form>
+</div>
+
+<div class="alt">Não tem conta? <a href="signup.html">Criar conta grátis →</a></div>
+
+<script>
+if(sessionStorage.getItem('fina_session')){location.href='dashboard.html';}
+
+var form = document.getElementById('form');
+var msg  = document.getElementById('msg');
+
+function showErr(text){
+  msg.className='msg err';
+  msg.textContent=text;
+}
+
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  var email = document.getElementById('email').value.trim().toLowerCase();
+  var pwd   = document.getElementById('pwd').value;
+
+  var raw = localStorage.getItem('fina_user');
+  if(!raw){return showErr('Conta não encontrada. Crie uma conta primeiro.');}
+
+  var user;
+  try{user=JSON.parse(raw);}catch(e){return showErr('Erro ao ler dados da conta.');}
+
+  if(user.email !== email){return showErr('E-mail ou senha incorretos.');}
+  if(user.pwd !== pwd){return showErr('E-mail ou senha incorretos.');}
+
+  sessionStorage.setItem('fina_session', JSON.stringify({name:user.name,email:user.email,at:Date.now()}));
+  location.href='dashboard.html';
+});
+</script>
+</body>
+</html>

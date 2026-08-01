@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criar conta · Fina.ai</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#06070f;--s1:#0c0e1c;--s2:#12152a;
+  --b1:rgba(255,255,255,.08);
+  --fina:#7c3aed;--fina-d:#6d28d9;--fina-l:#a78bfa;
+  --text:#f1f5f9;--muted:#64748b;--neg:#ef4444;--ok:#10b981;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;}
+.glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(circle,rgba(124,58,237,.14) 0%,transparent 65%);pointer-events:none;}
+
+/* LOGO */
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;text-decoration:none;color:var(--text);}
+.logo-mark{width:36px;height:36px;background:var(--fina);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:900;}
+.logo-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;}
+.logo-name em{color:var(--fina-l);font-style:normal;}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:36px;width:100%;max-width:420px;position:relative;}
+.card-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.card-sub{font-size:13.5px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
+
+/* FORM */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:7px;letter-spacing:.3px;}
+.field input{width:100%;background:var(--s2);border:1.5px solid var(--b1);border-radius:11px;padding:13px 16px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s;}
+.field input:focus{border-color:var(--fina);}
+.field input.err{border-color:var(--neg);}
+.field input::placeholder{color:var(--muted);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--b1);margin:4px 0 20px;}
+
+/* SUBMIT */
+.submit{width:100%;background:var(--fina);color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:4px;}
+.submit:hover{background:var(--fina-d);}
+.submit:active{transform:scale(.98);}
+
+/* MESSAGES */
+.msg{font-size:12.5px;padding:10px 14px;border-radius:9px;margin-bottom:16px;display:none;}
+.msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;display:block;}
+.msg.ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7;display:block;}
+
+/* FOOTER LINK */
+.alt{text-align:center;margin-top:22px;font-size:13.5px;color:var(--muted);}
+.alt a{color:var(--fina-l);font-weight:600;text-decoration:none;}
+.alt a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<a class="logo" href="index.html">
+  <div class="logo-mark">✦</div>
+  <div class="logo-name">fina<em>.ai</em></div>
+</a>
+
+<div class="card">
+  <div class="card-title">Criar conta grátis</div>
+  <div class="card-sub">Sem cartão de crédito. Cancele quando quiser.</div>
+
+  <div class="msg" id="msg"></div>
+
+  <form id="form" autocomplete="off">
+    <div class="field">
+      <label>Nome completo</label>
+      <input id="name" type="text" placeholder="Seu nome" autocomplete="name" required>
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <input id="email" type="email" placeholder="voce@email.com" autocomplete="email" required>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <label>Senha</label>
+      <input id="pwd" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
+    </div>
+    <div class="field">
+      <label>Confirmar senha</label>
+      <input id="pwd2" type="password" placeholder="Repita a senha" autocomplete="new-password" required>
+    </div>
+    <button class="submit" type="submit">Criar conta →</button>
+  </form>
+</div>
+
+<div class="alt">Já tem conta? <a href="login.html">Entrar →</a></div>
+
+<script>
+// Redirect if already logged in
+if(sessionStorage.getItem('fina_session')){location.href='dashboard.html';}
+
+var form = document.getElementById('form');
+var msg  = document.getElementById('msg');
+
+function showErr(text){
+  msg.className='msg err';
+  msg.textContent=text;
+}
+
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  var name  = document.getElementById('name').value.trim();
+  var email = document.getElementById('email').value.trim().toLowerCase();
+  var pwd   = document.getElementById('pwd').value;
+  var pwd2  = document.getElementById('pwd2').value;
+
+  if(!name){return showErr('Preencha seu nome.');}
+  if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){return showErr('E-mail inválido.');}
+  if(pwd.length<6){return showErr('A senha precisa ter pelo menos 6 caracteres.');}
+  if(pwd!==pwd2){return showErr('As senhas não coincidem.');}
+
+  // Persist user and start session
+  localStorage.setItem('fina_user', JSON.stringify({name:name,email:email,pwd:pwd,createdAt:Date.now()}));
+  sessionStorage.setItem('fina_session', JSON.stringify({name:name,email:email,at:Date.now()}));
+
+  location.href='dashboard.html';
+});
+</script>
+</body>
+</html>
