@@ -19,7 +19,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { tools, executores } from './mock-bank.js';
 
 const PORT = process.env.PORT || 3000;
-const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-4-8';
+const MODEL = process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001';
 const hasKey = !!process.env.ANTHROPIC_API_KEY;
 
 const SYSTEM = [
@@ -59,7 +59,7 @@ app.post('/api/chat', async (req, res) => {
       const response = await client.messages.create({
         model: MODEL,
         max_tokens: 1024,
-        thinking: { type: 'adaptive' },
+
         system: SYSTEM,
         tools,
         messages,
