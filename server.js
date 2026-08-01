@@ -118,7 +118,14 @@ async function getMCPTools() {
 async function callMCPTool(name, args) {
   const result = await mcpPost('tools/call', { name, arguments: args || {} });
   const text   = (result.content || []).find((b) => b.type === 'text')?.text;
-  try { return JSON.parse(text ?? '{}'); } catch { return { text }; }
+  let parsed;
+  try { parsed = JSON.parse(text ?? '{}'); } catch { return { text }; }
+  // Strip banking-mcp { data, meta:string } wrapper so MCP responses match mock-bank shape.
+  // OF envelopes also have 'links' at root, so only strip when 'links' is absent.
+  if (parsed && parsed.data !== undefined && typeof parsed.meta === 'string' && !('links' in parsed)) {
+    return parsed.data;
+  }
+  return parsed;
 }
 
 // ── Express ────────────────────────────────────────────────────

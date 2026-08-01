@@ -249,7 +249,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 // ── BRAND / WHITE-LABEL ──
 var BRANDS = {
   fina:  { id:'fina',  logo:'✦', nameHTML:'fina<em>.ai</em>', tagline:'Assistente financeira com IA', ccBank:'Bradesco', ccNetwork:'visa' },
-  pulso: { id:'pulso', logo:'◉', nameHTML:'Pulso<em> MCP</em>', tagline:'Open Finance · Bradesco',    ccBank:'Bradesco', ccNetwork:'mc'   },
+  pulso: { id:'pulso', logo:'◉', nameHTML:'Pulso<em> MCP</em>', tagline:'Open Finance · Bradesco',    ccBank:'Bradesco', ccNetwork:'visa' },
 };
 function applyBrand(id){
   var b = BRANDS[id] || BRANDS.fina;
@@ -637,6 +637,11 @@ function renderGeneric(body, d){
 
 // ── Dispatcher principal ──
 function renderCardBody(body, tool, d){
+  // Normalize banking-mcp { data, meta:string } wrapper present in MCP mode.
+  // OF envelopes also have 'links' at root, so only unwrap when 'links' is absent.
+  if (d && d.data !== undefined && typeof d.meta === 'string' && !('links' in d)) {
+    d = d.data;
+  }
   // 1. select_account (extensão)
   if(tool==='select_account'&&d&&d.accounts){ renderSelectAccount(body,d.accounts); return; }
   // 2. analytics (extensão)
