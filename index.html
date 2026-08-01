@@ -19,6 +19,14 @@
   --neg:#ef4444;
   --text:#f1f5f9; --muted:#64748b; --muted2:#1e2a3a;
 }
+:root[data-brand="pulso"]{
+  --fina:#CC092F;--fina-d:#a80725;--fina-l:#ff8a9a;
+  --fina-g:rgba(204,9,47,.12);--fina-gw:rgba(204,9,47,.08);
+}
+/* brand switcher */
+.brand-switcher{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--b1);border-radius:10px;padding:3px;}
+.brand-opt{border:none;background:none;color:var(--muted);font-size:11.5px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.brand-opt.active{background:var(--fina);color:#fff;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
@@ -251,8 +259,8 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:40px 80px;dis
 <!-- NAV -->
 <nav class="nav">
   <div class="nav-brand">
-    <div class="nav-logo">✦</div>
-    <div class="nav-name">fina<em>.ai</em></div>
+    <div class="nav-logo" id="navLogo">✦</div>
+    <div class="nav-name" id="navName">fina<em>.ai</em></div>
   </div>
   <div class="nav-links">
     <a href="#hiw">Como funciona</a>
@@ -261,7 +269,11 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:40px 80px;dis
     <a href="#security">Segurança</a>
     <a href="fina-chat.html">Demo</a>
   </div>
-  <a class="nav-cta" href="signup.html">Começar grátis →</a>
+  <div class="brand-switcher">
+    <button class="brand-opt active" data-brand="fina" onclick="switchBrand('fina')">✦ Fina.ai</button>
+    <button class="brand-opt" data-brand="pulso" onclick="switchBrand('pulso')">◉ Pulso MCP</button>
+  </div>
+  <a class="nav-cta" id="navCta" href="signup.html">Começar grátis →</a>
 </nav>
 
 <!-- HERO -->
@@ -695,6 +707,27 @@ function upP(){
   }
 
   run();
+})();
+
+// ── BRAND / WHITE-LABEL ────────────────────────────────────
+var BRANDS_LND = {
+  fina:  { logo:'✦', nameHTML:'fina<em>.ai</em>' },
+  pulso: { logo:'◉', nameHTML:'Pulso<em> MCP</em>' },
+};
+function applyBrandLnd(id) {
+  var b = BRANDS_LND[id] || BRANDS_LND.fina;
+  document.documentElement.setAttribute('data-brand', id);
+  document.getElementById('navLogo').textContent = b.logo;
+  document.getElementById('navName').innerHTML   = b.nameHTML;
+  localStorage.setItem('fina_brand', id);
+  document.querySelectorAll('.brand-opt').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.brand === id);
+  });
+}
+function switchBrand(id) { applyBrandLnd(id); }
+(function() {
+  var saved = localStorage.getItem('fina_brand') || new URLSearchParams(location.search).get('brand') || 'fina';
+  applyBrandLnd(saved);
 })();
 </script>
 </body>

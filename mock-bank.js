@@ -135,6 +135,64 @@ function gerarExtrato() {
 
 const EXTRATO = gerarExtrato();
 
+// Gera ~6 meses de lançamentos PJ (fev→jul 2026) agrupados por dia — Sousa Tech Ltda.
+function gerarExtratoPJ() {
+  const rng = rngFrom(20260723 + 99);
+  const porDia = new Map();
+  const add = (y, mo, d, item) => {
+    const key = `${y}-${mm(mo)}-${dd(d)}`;
+    if (!porDia.has(key)) porDia.set(key, { y, mo, d, items: [] });
+    porDia.get(key).items.push(item);
+  };
+
+  for (let mo = 2; mo <= 7; mo++) {
+    const y = 2026;
+
+    // Receitas de clientes
+    add(y, mo, 5,  { desc: 'TED recebido · Cliente Alpha Corp',  cat: 'Receitas/Clientes',      val:  money(rng, 80000,  150000), dir: 'in',  ic: '💰' });
+    add(y, mo, 15, { desc: 'TED recebido · Cliente Beta Ltda',   cat: 'Receitas/Clientes',      val:  money(rng, 30000,   70000), dir: 'in',  ic: '💰' });
+    add(y, mo, 20, { desc: 'PIX recebido · Cliente Gamma SA',    cat: 'Receitas/Clientes',      val:  money(rng, 20000,   45000), dir: 'in',  ic: '⚡' });
+
+    // Folha e pró-labore
+    add(y, mo, 5,  { desc: 'Folha pagamento · Sousa Tech Ltda',  cat: 'Folha/RH',               val: -money(rng, 45000,   65000), dir: 'out', ic: '👥' });
+    add(y, mo, 5,  { desc: 'Pró-labore · Raul Sousa',            cat: 'Pró-labore',             val: -14350,                      dir: 'out', ic: '💼' });
+
+    // Impostos
+    add(y, mo, 20, { desc: 'DAS · Simples Nacional',             cat: 'Impostos',               val: -money(rng, 12000,   22000), dir: 'out', ic: '🏛️' });
+    add(y, mo, 25, { desc: 'FGTS · Competência anterior',        cat: 'Impostos',               val: -money(rng,  3500,    6000), dir: 'out', ic: '🏛️' });
+
+    // Despesas fixas
+    add(y, mo, 1,  { desc: 'Aluguel · Escritório Av. Paulista',  cat: 'Aluguel/Escritório',     val: -8500,                       dir: 'out', ic: '🏢' });
+    add(y, mo, 10, { desc: 'CLARO Empresas',                     cat: 'Telecom',                val: -money(rng,   800,    1400), dir: 'out', ic: '📱' });
+    add(y, mo, 2,  { desc: 'AWS · Serviços Cloud',               cat: 'TI/Software',            val: -money(rng,  3000,    8000), dir: 'out', ic: '☁️' });
+    add(y, mo, 3,  { desc: 'GitHub Enterprise',                  cat: 'TI/Software',            val: -money(rng,   500,    1200), dir: 'out', ic: '💻' });
+    add(y, mo, 7,  { desc: 'Contabilidade · Escritório Fiscal',  cat: 'Contabilidade/Jurídico', val: -money(rng,  1800,    3200), dir: 'out', ic: '📋' });
+
+    // Marketing (60% dos meses)
+    if (rng() > 0.4) {
+      add(y, mo, 12, { desc: 'Google Ads · Campanha digital',    cat: 'Marketing',              val: -money(rng,  2000,    6000), dir: 'out', ic: '📣' });
+    }
+    add(y, mo, 18, { desc: 'LinkedIn Premium Business',          cat: 'Marketing',              val: -money(rng,   400,     800), dir: 'out', ic: '📣' });
+  }
+
+  // Ordena por data (mais recente primeiro) e rotula o dia.
+  const chave = (g) => g.y * 10000 + g.mo * 100 + g.d;
+  const grupos = [...porDia.values()].sort((a, b) => chave(b) - chave(a));
+  return grupos.map((g) => {
+    const ehHoje = g.mo === HOJE.m && g.d === HOJE.d;
+    const ehOntem = g.mo === HOJE.m && g.d === HOJE.d - 1;
+    const rotulo = `${g.d} ${MES_NOME[g.mo - 1]}`;
+    return {
+      date: `${g.y}-${mm(g.mo)}-${dd(g.d)}`,
+      day: ehHoje ? `Hoje · ${rotulo}` : ehOntem ? `Ontem · ${rotulo}` : rotulo,
+      accountId: 'pj-cc-0001',
+      items: g.items,
+    };
+  });
+}
+
+const EXTRATO_PJ = gerarExtratoPJ();
+
 // ─────────────────────────────────────────────────────────────
 // CARTÃO DE CRÉDITO — 4 faturas (abr→jul 2026), gastos altos/variados.
 // ─────────────────────────────────────────────────────────────
@@ -252,6 +310,21 @@ function gastosDoMes(periodo) {
   return { gastos, total: Number(total.toFixed(2)), maior: gastos[0]?.cat };
 }
 
+// Gastos por categoria (débitos) num período AAAA-MM, a partir do extrato PJ.
+function gastosDoMesPJ(periodo) {
+  const grupos = EXTRATO_PJ.filter((g) => g.date.startsWith(periodo));
+  const mapa = new Map();
+  for (const g of grupos)
+    for (const it of g.items)
+      if (it.val < 0) mapa.set(it.cat, (mapa.get(it.cat) || 0) + Math.abs(it.val));
+  const total = [...mapa.values()].reduce((s, v) => s + v, 0);
+  const gastos = [...mapa.entries()]
+    .map(([cat, val]) => ({ cat, val: Number(val.toFixed(2)) }))
+    .sort((a, b) => b.val - a.val)
+    .map((x, i) => ({ ...x, pct: Math.round((x.val / total) * 100), color: PALETA[i % PALETA.length] }));
+  return { gastos, total: Number(total.toFixed(2)), maior: gastos[0]?.cat };
+}
+
 // ── Conta PJ (Sousa Tech) ──
 const CONTA_PJ = {
   disponivel: 284750.00,
@@ -319,10 +392,35 @@ export const executores = {
 
   consultar_gastos(input = {}) {
     const periodo = input.periodo ?? `${HOJE.y}-${mm(HOJE.m)}`;
-    const { gastos, total, maior } = gastosDoMes(periodo);
+    const conta = input.conta ?? 'pf';
+    const { gastos, total, maior } = conta === 'pj' ? gastosDoMesPJ(periodo) : gastosDoMes(periodo);
     return {
-      data: { periodo, gastos, total, maior },
+      data: { periodo, gastos, total, maior, conta },
       meta: `GET /contas/v1/extrato?periodo=${periodo} · agregação por categoria · 341ms`,
+    };
+  },
+
+  of_get_account_transactions(input = {}) {
+    const { accountId, pageSize } = input;
+    const fonte = accountId === 'pj-cc-0001' ? EXTRATO_PJ : extratoUltimosDias(30);
+    const txs = [];
+    for (const g of fonte) {
+      g.items.forEach((it, i) => {
+        txs.push({
+          transactionId: `tx-${g.date}-${i}`,
+          transactionName: it.desc,
+          creditDebitType: it.dir === 'in' ? 'CREDITO' : 'DEBITO',
+          transactionAmount: { amount: String(Math.abs(it.val)), currency: 'BRL' },
+          bookingDate: g.date,
+          transactionDate: g.date,
+          category: it.cat,
+        });
+      });
+    }
+    return {
+      data: txs.slice(0, pageSize || 30),
+      links: { self: '', first: '', last: '' },
+      meta: { totalRecords: txs.length, requestDateTime: '2026-07-23T10:00:00Z' },
     };
   },
 
@@ -416,11 +514,12 @@ export const tools = [
   {
     name: 'consultar_gastos',
     description:
-      'Retorna os gastos (débitos) de um mês agregados por categoria e o total. Use quando o usuário perguntar quanto gastou, sobre despesas ou gastos por categoria da conta corrente.',
+      'Retorna gastos do mês agrupados por categoria com gráfico interativo (pizza + barras). Use para QUALQUER pedido de gastos, despesas, categorias, gráfico, chart, visualização por categoria — o app renderiza o gráfico automaticamente. Para conta PJ Sousa Tech, use conta="pj".',
     input_schema: {
       type: 'object',
       properties: {
         periodo: { type: 'string', description: 'Mês no formato AAAA-MM. Ex: 2026-07. Padrão: mês corrente.' },
+        conta: { type: 'string', enum: ['pf', 'pj'], description: '"pf" para conta corrente PF (padrão), "pj" para Sousa Tech Ltda.' },
       },
     },
   },
@@ -429,6 +528,18 @@ export const tools = [
     description:
       'Retorna as movimentações PIX recentes (enviados e recebidos) da conta corrente. Use quando o usuário perguntar sobre PIX.',
     input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'of_get_account_transactions',
+    description:
+      'Retorna as transações/extrato de uma conta específica no formato Open Finance. PF corrente: accountId=pf-cc-0001. PJ Sousa Tech: accountId=pj-cc-0001.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        accountId: { type: 'string', description: 'ID da conta: pf-cc-0001 (PF corrente), pj-cc-0001 (PJ Sousa Tech).' },
+        pageSize: { type: 'integer', description: 'Número de transações. Padrão: 30.' },
+      },
+    },
   },
   {
     name: 'consultar_fatura',
