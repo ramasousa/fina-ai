@@ -147,13 +147,25 @@ app.post('/api/chat', async (req, res) => {
   if (!incoming.length) return res.status(400).json({ error: 'empty', message: 'messages vazio.' });
 
   // Seleciona a fonte de tools: MCP server ou mock-bank local.
+  // Quando MCP está ativo, mesclamos com as extensões do mock-bank que não existem no MCP
+  // (ex: consultar_gastos, consultar_fatura, consultar_pix) para que Claude possa chamá-las.
   let tools, callTool;
 
   if (MCP_URL) {
     try {
-      tools    = await getMCPTools();
-      callTool = callMCPTool;
-      console.log(`  [MCP] ${tools.length} tools carregadas de ${MCP_URL}`);
+      const mcpList  = await getMCPTools();
+      const mcpNames = new Set(mcpList.map((t) => t.name));
+      const mockExt  = mockTools.filter((t) => !mcpNames.has(t.name));
+      tools = [...mcpList, ...mockExt];
+      callTool = async (name, args) => {
+        if (!mcpNames.has(name)) {
+          // Extensão mock-only (ex: consultar_gastos) — executa localmente.
+          const fn = mockExecutores[name];
+          return fn ? fn(args || {}).data : { erro: 'tool desconhecida' };
+        }
+        return callMCPTool(name, args);
+      };
+      console.log(`  [MCP] ${mcpList.length} tools MCP + ${mockExt.length} extensões mock`);
     } catch (err) {
       console.warn(`  [MCP] falhou, usando mock-bank: ${err.message}`);
     }
