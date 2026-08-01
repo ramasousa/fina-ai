@@ -89,6 +89,17 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .tool-value.red{color:#fca5a5;}
 .tool-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);font-size:14px;font-weight:700;}
 .tool-total .val{color:var(--money-l);font-family:'DM Mono',monospace;}
+.account-group-label{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;padding:8px 0 4px;border-top:1px solid var(--b2);margin-top:6px;}
+.account-group-label:first-child{border-top:none;margin-top:0;padding-top:0;}
+.cat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b2);}
+.cat-row:last-of-type{border-bottom:none;}
+.cat-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.cat-info{flex:1;min-width:0;}
+.cat-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;font-size:13px;}
+.cat-name{font-weight:500;}
+.cat-amount{font-weight:700;font-family:'DM Mono',monospace;font-size:12.5px;}
+.cat-bar-track{height:3px;background:rgba(255,255,255,.07);border-radius:2px;}
+.cat-bar-fill{height:100%;border-radius:2px;}
 
 /* Typing indicator */
 .typing{display:flex;align-items:center;gap:5px;padding:14px 16px;}
@@ -290,10 +301,24 @@ function addRow(parent, label, value, cls){
 // ── Open Finance renderers ──
 function renderSelectAccount(body, accounts){
   var total = 0;
-  (accounts||[]).forEach(function(a){
-    var v = parseFloat((a.saldo_disponivel||{}).amount||0); total += v;
-    addRow(body, (a.rotulo||a.tipo||'Conta') + (a.titular ? ' · '+a.titular : ''), fmt(v), 'green');
-  });
+  var pf = (accounts||[]).filter(function(a){ return a.personType !== 'PESSOA_JURIDICA'; });
+  var pj = (accounts||[]).filter(function(a){ return a.personType === 'PESSOA_JURIDICA'; });
+
+  function renderGroup(accs, label){
+    if(!accs.length) return;
+    var sep = document.createElement('div');
+    sep.className = 'account-group-label';
+    sep.textContent = label;
+    body.appendChild(sep);
+    accs.forEach(function(a){
+      var v = parseFloat((a.saldo_disponivel||{}).amount||0); total += v;
+      addRow(body, a.rotulo||a.tipo||'Conta', fmt(v), 'green');
+    });
+  }
+
+  renderGroup(pf, 'Pessoa Física');
+  renderGroup(pj, 'Empresa' + (pj.length && pj[0].titular ? ' — '+pj[0].titular : ''));
+
   if ((accounts||[]).length > 1){
     var tot = document.createElement('div'); tot.className='tool-total';
     tot.innerHTML='<span>Total disponível</span><span class="val">'+fmt(total)+'</span>';
@@ -397,6 +422,50 @@ function renderAnalytics(body, d){
   }
 }
 
+var CAT_COLORS = ['#7c3aed','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+var CAT_ICONS = {
+  'Alimentação':'🍔','Restaurantes':'🍽️','Delivery':'🛵','Mercado':'🛒','Supermercado':'🛒',
+  'Transporte':'🚗','Combustível':'⛽','Saúde':'💊','Vestuário':'👔','Eletrônicos':'📱',
+  'Lazer':'🎮','Moradia':'🏠','Educação':'📚','Outros':'📦','Assinaturas':'📡',
+};
+
+function renderCategoryBars(body, categories){
+  var sorted = (categories||[]).slice().sort(function(a,b){
+    return (b.total||b.valor||0)-(a.total||a.valor||0);
+  }).slice(0,6);
+  var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||0); }, 0);
+
+  sorted.forEach(function(c, i){
+    var name = c.categoria||c.nome||'Outros';
+    var val  = c.total||c.valor||0;
+    var pct  = total>0 ? Math.round(val/total*100) : 0;
+    var color = CAT_COLORS[i % CAT_COLORS.length];
+    var icon  = CAT_ICONS[name] || '📦';
+
+    var row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML =
+      '<span class="cat-icon">'+icon+'</span>'
+      +'<div class="cat-info">'
+        +'<div class="cat-top">'
+          +'<span class="cat-name">'+name+'</span>'
+          +'<span class="cat-amount" style="color:'+color+'">'+fmt(val)+'</span>'
+        +'</div>'
+        +'<div class="cat-bar-track">'
+          +'<div class="cat-bar-fill" style="width:'+pct+'%;background:'+color+';"></div>'
+        +'</div>'
+      +'</div>';
+    body.appendChild(row);
+  });
+
+  if(total>0){
+    var tot = document.createElement('div'); tot.className='tool-total';
+    tot.style.marginTop='10px';
+    tot.innerHTML='<span>Total</span><span class="val">'+fmt(total)+'</span>';
+    body.appendChild(tot);
+  }
+}
+
 function renderGeneric(body, d){
   if(!d){ body.textContent='Sem dados.'; return; }
   var SKIP=new Set(['links','meta','requestDateTime','_meta']);
@@ -458,9 +527,7 @@ function renderCardBody(body, tool, d){
     });
     return;
   }
-  if(tool==='get_gastos_categoria'&&d&&d.categorias){
-    (d.categorias||[]).forEach(function(c){ addRow(body,c.categoria||c.nome,fmt(c.total||c.valor),'red'); }); return;
-  }
+  if(tool==='get_gastos_categoria'&&d&&d.categorias){ renderCategoryBars(body,d.categorias); return; }
   if(tool==='get_investimentos'&&d&&d.ativos){
     (d.ativos||[]).forEach(function(a){ addRow(body,a.nome,fmt(a.valor),'green'); });
     if(d.total){ var tot2=document.createElement('div');tot2.className='tool-total';tot2.innerHTML='<span>Total investido</span><span class="val">'+fmt(d.total)+'</span>';body.appendChild(tot2); }
