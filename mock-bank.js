@@ -417,10 +417,15 @@ export const executores = {
         });
       });
     }
+    const sliced = txs.slice(0, pageSize || 30);
+    // callTool extrai .data → frontend recebe o envelope Open Finance { data, links, meta }
     return {
-      data: txs.slice(0, pageSize || 30),
-      links: { self: '', first: '', last: '' },
-      meta: { totalRecords: txs.length, requestDateTime: '2026-07-23T10:00:00Z' },
+      data: {
+        data: sliced,
+        links: { self: '', first: '', last: '' },
+        meta: { totalRecords: txs.length, requestDateTime: '2026-07-23T10:00:00Z' },
+      },
+      meta: 'extensão · of_get_account_transactions (mock)',
     };
   },
 
