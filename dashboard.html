@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dashboard · Fina.ai</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -17,7 +17,8 @@
   --side-w:220px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+html{height:-webkit-fill-available;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;min-height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
 
 /* ── TOP NAV ── */
 .topnav{height:var(--nav-h);background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:10;}
@@ -109,7 +110,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
 
 /* ── INPUT BAR ── */
-.input-bar{border-top:1px solid var(--b1);padding:16px 24px;background:var(--s1);flex-shrink:0;}
+.input-bar{border-top:1px solid var(--b1);padding:16px 24px;padding-bottom:max(16px,env(safe-area-inset-bottom));background:var(--s1);flex-shrink:0;}
 .input-inner{max-width:740px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;}
 .input-box{flex:1;background:var(--s2);border:1.5px solid var(--b1);border-radius:14px;padding:12px 16px;font-size:14px;font-family:inherit;color:var(--text);resize:none;outline:none;max-height:140px;min-height:48px;line-height:1.5;transition:border-color .15s;}
 .input-box:focus{border-color:var(--fina);}
@@ -431,13 +432,13 @@ var CAT_ICONS = {
 
 function renderCategoryBars(body, categories){
   var sorted = (categories||[]).slice().sort(function(a,b){
-    return (b.total||b.valor||0)-(a.total||a.valor||0);
+    return (b.total||b.valor||b.val||0)-(a.total||a.valor||a.val||0);
   }).slice(0,6);
-  var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||0); }, 0);
+  var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||c.val||0); }, 0);
 
   sorted.forEach(function(c, i){
-    var name = c.categoria||c.nome||'Outros';
-    var val  = c.total||c.valor||0;
+    var name = c.categoria||c.nome||c.cat||'Outros';
+    var val  = c.total||c.valor||c.val||0;
     var pct  = total>0 ? Math.round(val/total*100) : 0;
     var color = CAT_COLORS[i % CAT_COLORS.length];
     var icon  = CAT_ICONS[name] || '📦';
@@ -514,7 +515,46 @@ function renderCardBody(body, tool, d){
     }
     return;
   }
-  // 4. Legacy mock-bank
+  // 4a. Mock-bank diretos (consultar_*)
+  if(tool==='consultar_saldo'&&d){
+    if(d.disponivel!=null) addRow(body,'Conta corrente',fmt(d.disponivel),'green');
+    if(d.poupanca!=null) addRow(body,'Poupança',fmt(d.poupanca),'green');
+    if(d.bloqueado!=null&&d.bloqueado>0) addRow(body,'Bloqueado',fmt(d.bloqueado),'red');
+    if(d.limite!=null&&d.limite>0) addRow(body,'Cheque especial',fmt(d.limite),'');
+    if(d.rendimento_mes!=null&&d.rendimento_mes>0) addRow(body,'Rendimento este mês',fmt(d.rendimento_mes),'green');
+    var totS=(d.disponivel||0)+(d.poupanca||0);
+    if(totS>0){var tS=document.createElement('div');tS.className='tool-total';tS.innerHTML='<span>Total disponível</span><span class="val">'+fmt(totS)+'</span>';body.appendChild(tS);}
+    return;
+  }
+  if(tool==='consultar_gastos'&&d&&d.gastos){ renderCategoryBars(body,d.gastos); return; }
+  if(tool==='consultar_fatura'&&d){
+    var fa=d.fatura_atual||d;
+    if(fa.total!=null) addRow(body,'Total da fatura',fmt(fa.total),'red');
+    if(fa.vencimento) addRow(body,'Vencimento',fa.vencimento,'');
+    if(fa.limite_disponivel!=null) addRow(body,'Limite disponível',fmt(fa.limite_disponivel),'green');
+    if(fa.por_categoria&&fa.por_categoria.length){
+      var sep=document.createElement('div');
+      sep.className='account-group-label';sep.style.marginTop='8px';
+      sep.textContent='Gastos por categoria';body.appendChild(sep);
+      renderCategoryBars(body,fa.por_categoria);
+    }
+    return;
+  }
+  if(tool==='consultar_extrato'&&d&&d.grupos){
+    var all=[];
+    (d.grupos||[]).slice(0,5).forEach(function(g){(g.items||[]).forEach(function(it){all.push(it);});});
+    all.slice(0,10).forEach(function(it){
+      var isC=it.dir==='in';
+      addRow(body,it.desc,(isC?'+':'')+fmt(Math.abs(it.val)),isC?'green':'red');
+    });
+    if(d.entradas!=null||d.saidas!=null){
+      var tot3=document.createElement('div');tot3.className='tool-total';
+      tot3.innerHTML='<span>Saídas</span><span class="val" style="color:#fca5a5">'+fmt(d.saidas||0)+'</span>';
+      body.appendChild(tot3);
+    }
+    return;
+  }
+  // 4b. Legacy mock-bank
   if(tool==='get_saldo'&&d&&d.contas){
     (d.contas||[]).forEach(function(c){ addRow(body,c.banco,fmt(c.saldo),'green'); });
     if(d.total){ var tot=document.createElement('div');tot.className='tool-total';tot.innerHTML='<span>Total</span><span class="val">'+fmt(d.total)+'</span>';body.appendChild(tot); }
