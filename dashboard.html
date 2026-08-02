@@ -504,7 +504,7 @@ function renderDonutChart(container, items, total){
   // bg ring
   var bg=document.createElementNS(NS,'circle');
   bg.setAttribute('cx',CX);bg.setAttribute('cy',CY);bg.setAttribute('r',R);
-  bg.setAttribute('fill','none');bg.setAttribute('stroke','rgba(0,0,0,.08)');bg.setAttribute('stroke-width',SW);
+  bg.setAttribute('fill','none');bg.setAttribute('stroke','rgba(255,255,255,.12)');bg.setAttribute('stroke-width',SW);
   svg.appendChild(bg);
   var offset=0;
   items.forEach(function(item,i){
@@ -531,7 +531,7 @@ function renderDonutChart(container, items, total){
     t.setAttribute('font-weight',weight);t.setAttribute('font-family','DM Sans,system-ui,sans-serif');
     t.textContent=text; return t;
   }
-  svg.appendChild(mkT(CY-4,9,'rgba(0,0,0,.45)','400','total'));
+  svg.appendChild(mkT(CY-4,9,'rgba(255,255,255,.6)','400','total'));
   svg.appendChild(mkT(CY+9,10,'#34d399','700',fmt(total).replace('R$ ','R$')));
   container.appendChild(svg);
 }
@@ -657,7 +657,7 @@ function renderCardBody(body, tool, d){
       else if(tool==='of_list_accounts') renderAccountList(body,inner);
       else if(tool==='of_list_investments') renderInvestments(body,inner);
       else if(tool==='of_list_credit_cards') renderCards(body,inner);
-      else if(tool==='of_get_credit_card_bills') renderBills(body,inner);
+      else if(tool==='of_get_credit_card_bills'){ renderCreditCard(body,{holder:'RAUL SOUSA',expiry:'12/28'}); renderBills(body,inner); }
       else {
         inner.slice(0,6).forEach(function(item){
           var pre=document.createElement('div');
