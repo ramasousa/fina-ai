@@ -170,6 +170,13 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 
 /* Error banner */
 .err-banner{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;border-radius:10px;padding:10px 14px;font-size:13px;margin:8px 24px;max-width:740px;margin:8px auto;width:calc(100% - 48px);}
+/* ── PINNED CARD BAR ── */
+#pinnedBar{border-top:1px solid var(--b1);background:var(--s1);display:none;overflow:hidden;max-height:260px;transition:max-height .25s ease;}
+#pinnedBar.collapsed{max-height:36px;}
+.pin-header{padding:7px 24px;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.pin-body{overflow-y:auto;max-height:220px;padding:0 24px 10px;}
+.pin-body .tool-card{margin:0;border-radius:10px;}
+@media(max-width:640px){.pin-header{padding:7px 16px;}.pin-body{padding:0 16px 8px;}}
 </style>
 </head>
 <body>
@@ -241,6 +248,15 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
     <div class="chat-wrap" id="chatWrap" style="display:none;"></div>
 
   </main>
+</div>
+
+<!-- PINNED CARD BAR — stays visible while chatting -->
+<div id="pinnedBar">
+  <div class="pin-header" onclick="togglePin()">
+    <span id="pinLabel">📌 Último resultado</span>
+    <span id="pinToggle">▲</span>
+  </div>
+  <div class="pin-body" id="pinBody"></div>
 </div>
 
 <!-- INPUT BAR -->
@@ -756,11 +772,34 @@ function renderCard(step){
   return card;
 }
 
+var _pinExpanded = true;
+function togglePin(){
+  _pinExpanded = !_pinExpanded;
+  document.getElementById('pinnedBar').classList.toggle('collapsed', !_pinExpanded);
+  document.getElementById('pinToggle').textContent = _pinExpanded ? '▲' : '▼';
+}
+function pinCard(cardEl, label){
+  var bar  = document.getElementById('pinnedBar');
+  var body = document.getElementById('pinBody');
+  body.innerHTML = '';
+  body.appendChild(cardEl.cloneNode(true));
+  document.getElementById('pinLabel').textContent = '📌 ' + label;
+  bar.style.display = 'block';
+  _pinExpanded = true;
+  bar.classList.remove('collapsed');
+  document.getElementById('pinToggle').textContent = '▲';
+}
+
 function insertCards(steps){
   var cw = document.getElementById('chatWrap');
+  var lastCard = null, lastStep = null;
   steps.forEach(function(step){
-    cw.appendChild(renderCard(step));
+    var card = renderCard(step);
+    cw.appendChild(card);
+    lastCard = card;
+    lastStep = step;
   });
+  if(lastCard) pinCard(lastCard, CARD_TITLES[lastStep.tool] || lastStep.tool);
   scrollBottom();
 }
 
