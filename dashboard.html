@@ -26,7 +26,7 @@
 .brand-opt{border:none;background:none;color:var(--muted);font-size:11.5px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .brand-opt.active{background:var(--fina);color:#fff;}
 /* ── CREDIT CARD VISUAL ── */
-.cc-visual{border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;margin-bottom:14px;min-height:148px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,var(--fina-d) 0%,var(--fina) 55%,rgba(167,139,250,.5) 100%);}
+.cc-visual{border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;margin-bottom:14px;min-height:148px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,var(--fina-d) 0%,var(--fina) 55%,rgba(167,139,250,.5) 100%);max-width:340px;width:100%;}
 :root[data-brand="pulso"] .cc-visual{background:linear-gradient(135deg,#8B0019 0%,var(--fina-d) 45%,var(--fina) 100%);}
 .cc-visual::before{content:'';position:absolute;top:-50px;right:-50px;width:190px;height:190px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none;}
 .cc-visual::after{content:'';position:absolute;bottom:-70px;right:30px;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none;}
@@ -494,47 +494,6 @@ function renderAnalytics(body, d){
   }
 }
 
-// ── DONUT CHART ──
-function renderDonutChart(container, items, total){
-  var NS='http://www.w3.org/2000/svg', W=140, R=48, SW=20, CX=W/2, CY=W/2;
-  var circ=2*Math.PI*R;
-  var svg=document.createElementNS(NS,'svg');
-  svg.setAttribute('viewBox','0 0 '+W+' '+W);
-  svg.style.cssText='width:140px;height:140px;display:block;';
-  // bg ring
-  var bg=document.createElementNS(NS,'circle');
-  bg.setAttribute('cx',CX);bg.setAttribute('cy',CY);bg.setAttribute('r',R);
-  bg.setAttribute('fill','none');bg.setAttribute('stroke','rgba(255,255,255,.12)');bg.setAttribute('stroke-width',SW);
-  svg.appendChild(bg);
-  var offset=0;
-  items.forEach(function(item,i){
-    var val=item.total||item.valor||item.val||0;
-    var pct=total>0?val/total:0;
-    var dash=pct*circ;
-    if(dash<1)return;
-    var c=document.createElementNS(NS,'circle');
-    c.setAttribute('cx',CX);c.setAttribute('cy',CY);c.setAttribute('r',R);
-    c.setAttribute('fill','none');
-    c.setAttribute('stroke',item.color||CAT_COLORS[i%CAT_COLORS.length]);
-    c.setAttribute('stroke-width',SW);
-    c.setAttribute('stroke-dasharray',(dash-1.5)+' '+(circ-dash+1.5));
-    c.setAttribute('stroke-dashoffset',circ-offset);
-    c.setAttribute('transform','rotate(-90 '+CX+' '+CY+')');
-    svg.appendChild(c);
-    offset+=dash;
-  });
-  // center label
-  function mkT(y,size,fill,weight,text){
-    var t=document.createElementNS(NS,'text');
-    t.setAttribute('x',CX);t.setAttribute('y',y);t.setAttribute('text-anchor','middle');
-    t.setAttribute('fill',fill);t.setAttribute('font-size',size);
-    t.setAttribute('font-weight',weight);t.setAttribute('font-family','DM Sans,system-ui,sans-serif');
-    t.textContent=text; return t;
-  }
-  svg.appendChild(mkT(CY-4,9,'rgba(255,255,255,.6)','400','total'));
-  svg.appendChild(mkT(CY+9,10,'#34d399','700',fmt(total).replace('R$ ','R$')));
-  container.appendChild(svg);
-}
 
 // ── CREDIT CARD VISUAL ──
 function renderCreditCard(container, info){
@@ -589,35 +548,26 @@ function renderCategoryBars(body, categories, skipTotal){
   });
   var total = sorted.reduce(function(s,c){ return s+(c.total||c.valor||c.val||0); }, 0);
   var top6  = sorted.slice(0,6);
-
-  // Donut centralizado
-  var donutWrap = document.createElement('div'); donutWrap.className='cat-donut-center';
-  renderDonutChart(donutWrap, top6, total);
-  body.appendChild(donutWrap);
-
-  // Legenda abaixo
-  var legend = document.createElement('div'); legend.className='cat-legend';
   top6.forEach(function(c, i){
     var name  = c.categoria||c.nome||c.cat||'Outros';
     var val   = c.total||c.valor||c.val||0;
     var pct   = total>0 ? Math.round(val/total*100) : 0;
     var color = c.color || CAT_COLORS[i % CAT_COLORS.length];
     var icon  = CAT_ICONS[name] || '📦';
-
-    var row = document.createElement('div'); row.className='cat-leg-row';
+    var row = document.createElement('div'); row.className='cat-row';
     row.innerHTML =
-      '<div class="cat-leg-left">'
-        +'<span class="cat-leg-dot" style="background:'+color+'"></span>'
-        +'<span class="cat-leg-name">'+icon+' '+name+'</span>'
-      +'</div>'
-      +'<div class="cat-leg-right">'
-        +'<span class="cat-leg-pct" style="color:'+color+'">'+pct+'%</span>'
-        +'<span class="cat-leg-val">'+fmt(val)+'</span>'
+      '<span class="cat-icon">'+icon+'</span>'
+      +'<div class="cat-info">'
+        +'<div class="cat-top">'
+          +'<span class="cat-name">'+name+'</span>'
+          +'<span class="cat-amount" style="color:'+color+'">'+pct+'% · '+fmt(val)+'</span>'
+        +'</div>'
+        +'<div class="cat-bar-track">'
+          +'<div class="cat-bar-fill" style="width:'+pct+'%;background:'+color+'"></div>'
+        +'</div>'
       +'</div>';
-    legend.appendChild(row);
+    body.appendChild(row);
   });
-  body.appendChild(legend);
-
   if(!skipTotal&&total>0){
     var tot = document.createElement('div'); tot.className='tool-total';
     tot.innerHTML='<span>Total</span><span class="val">'+fmt(total)+'</span>';
